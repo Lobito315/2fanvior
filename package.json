@@ -11,7 +11,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "cloudflare-opennext-adapter": "npm:@opennextjs/cloudflare@^1.6.0",
+    "@opennextjs/cloudflare": "^1.6.0",
     "@paypal/react-paypal-js": "^9.0.2",
     "@prisma/adapter-d1": "^7.5.0",
     "@prisma/client": "6.19.2",
