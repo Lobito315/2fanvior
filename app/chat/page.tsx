@@ -8,10 +8,13 @@ import Pusher from 'pusher-js';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-// Initialize Pusher Client
-const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-});
+// Initialize Pusher Client safely for SSR
+const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY || '';
+const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'us2';
+
+const pusher = typeof window !== 'undefined' && pusherKey
+  ? new Pusher(pusherKey, { cluster: pusherCluster })
+  : null;
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -34,6 +37,8 @@ export default function ChatPage() {
   const activeChatId = "chat_123";
 
   useEffect(() => {
+    if (!pusher) return;
+
     // Subscribe to Pusher channel
     const channel = pusher.subscribe(activeChatId);
 
@@ -54,7 +59,7 @@ export default function ChatPage() {
     });
 
     return () => {
-      pusher.unsubscribe(activeChatId);
+      if (pusher) pusher.unsubscribe(activeChatId);
     };
   }, []);
 
