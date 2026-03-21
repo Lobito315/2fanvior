@@ -7,165 +7,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                String       @id @default(cuid())
+  email             String       @unique
+  handle            String       @unique
+  name              String
+  passwordHash      String?
+  avatar            String?
+  bio               String?
+  subscriptionPrice Float        @default(9.99)
+  role              Role         @default(SUBSCRIBER)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  posts             Post[]
+  messagesSent      Message[]    @relation("Sender")
+  messagesReceived  Message[]    @relation("Receiver")
+  
+  subscriptions     Subscription[] @relation("Subscriber")
+  subscribers       Subscription[] @relation("Creator")
+  
+  payments          Payment[]
+  notifications     Notification[]
+}
+
 enum Role {
-  CREATOR
   SUBSCRIBER
+  CREATOR
   ADMIN
 }
 
-enum PostVisibility {
-  PUBLIC
-  SUBSCRIBER_ONLY
-  PAID
+model Post {
+  id          String   @id @default(cuid())
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id])
+  contentUrl  String
+  isLocked    Boolean  @default(false)
+  title       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
-enum MediaType {
-  IMAGE
-  VIDEO
+model Subscription {
+  id           String   @id @default(cuid())
+  subscriberId String
+  creatorId    String
+  subscriber   User     @relation("Subscriber", fields: [subscriberId], references: [id])
+  creator      User     @relation("Creator", fields: [creatorId], references: [id])
+  status       SubStatus @default(ACTIVE)
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
 }
 
-enum PaymentStatus {
+enum SubStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Float
+  currency  String   @default("USD")
+  type      PayType
+  status    PayStatus @default(COMPLETED)
+  createdAt DateTime @default(now())
+}
+
+enum PayType {
+  SUBSCRIPTION
+  TIP
+  UNLOCK
+}
+
+enum PayStatus {
   PENDING
   COMPLETED
   FAILED
 }
 
-enum NotificationType {
-  SUBSCRIPTION
-  MESSAGE
-  TIP
-  POST_UNLOCKED
-  MODERATION
-  SECURITY
-}
-
-model User {
-  id                String          @id @default(cuid())
-  email             String          @unique
-  username          String          @unique
-  passwordHash      String
-  role              Role            @default(SUBSCRIBER)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  profile           Profile?
-  posts             Post[]
-  tiers             SubscriptionTier[]
-  sentMessages      Message[]       @relation("SentMessages")
-  subscriptionsFrom Subscription[]  @relation("SubscriberSubscriptions")
-  subscriptionsTo   Subscription[]  @relation("CreatorSubscriptions")
-  purchases         Purchase[]
-  notifications     Notification[]
-  participants      ConversationParticipant[]
-}
-
-model Profile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  displayName       String
-  bio               String   @default("")
-  avatarUrl         String?
-  subscriptionPrice Decimal  @default(9.99) @db.Decimal(10, 2)
-  paypalMerchantId  String?
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Post {
-  id          String         @id @default(cuid())
-  authorId    String
-  author      User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  title       String
-  description String         @default("")
-  mediaUrl    String
-  mediaType   MediaType
-  visibility  PostVisibility @default(PUBLIC)
-  price       Decimal?       @db.Decimal(10, 2)
-  isPublished Boolean        @default(true)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  purchases   Purchase[]
-  moderation  ModerationFlag[]
-}
-
-model SubscriptionTier {
-  id          String   @id @default(cuid())
-  creatorId   String
-  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  name        String
-  description String   @default("")
-  price       Decimal  @db.Decimal(10, 2)
-  perks       String[]
-  createdAt   DateTime @default(now())
-}
-
-model Subscription {
-  id           String        @id @default(cuid())
-  subscriberId String
-  creatorId    String
-  paypalPlanId String?
-  status       PaymentStatus @default(PENDING)
-  startedAt    DateTime      @default(now())
-  subscriber   User          @relation("SubscriberSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
-  creator      User          @relation("CreatorSubscriptions", fields: [creatorId], references: [id], onDelete: Cascade)
-
-  @@unique([subscriberId, creatorId])
-}
-
-model Purchase {
-  id            String        @id @default(cuid())
-  userId        String
-  postId        String?
-  amount        Decimal       @db.Decimal(10, 2)
-  paypalOrderId String?
-  type          String
-  status        PaymentStatus @default(PENDING)
-  createdAt     DateTime      @default(now())
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post          Post?         @relation(fields: [postId], references: [id], onDelete: SetNull)
-}
-
-model Conversation {
-  id           String                    @id @default(cuid())
-  createdAt    DateTime                  @default(now())
-  participants ConversationParticipant[]
-  messages     Message[]
-}
-
-model ConversationParticipant {
-  id             String       @id @default(cuid())
-  conversationId String
-  userId         String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([conversationId, userId])
-}
-
 model Message {
-  id             String       @id @default(cuid())
-  conversationId String
-  senderId       String
-  content        String
-  createdAt      DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+  content    String
+  createdAt  DateTime @default(now())
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  type      NotificationType
-  title     String
-  body      String
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model ModerationFlag {
   id        String   @id @default(cuid())
-  postId     String
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  reason     String
-  status     String   @default("PENDING")
-  createdAt  DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

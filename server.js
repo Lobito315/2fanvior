@@ -1,99 +1,66 @@
-const { createServer } = require("http");
-const next = require("next");
-const { WebSocketServer } = require("ws");
-const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
+const { createServer } = require('http');
+const { parse } = require('url');
+const next = require('next');
+const { Server } = require('socket.io');
 
-const dev = process.env.NODE_ENV !== "production";
-const host = "0.0.0.0";
-const port = parseInt(process.env.PORT || "3000", 10);
-const app = next({ dev, hostname: host, port });
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = 'localhost';
+const port = process.env.PORT || 3000;
+
+const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
-const prisma = new PrismaClient();
-
-function parseCookies(raw = "") {
-  return raw.split(";").reduce((acc, current) => {
-    const [key, ...rest] = current.trim().split("=");
-    if (!key) return acc;
-    acc[key] = decodeURIComponent(rest.join("="));
-    return acc;
-  }, {});
-}
-
-function getUserIdFromRequest(req) {
-  const cookies = parseCookies(req.headers.cookie || "");
-  const token = cookies.fanvior_token;
-  if (!token) return null;
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || "fanvior-dev-secret");
-    return payload.sub;
-  } catch {
-    return null;
-  }
-}
 
 app.prepare().then(() => {
-  const server = createServer((req, res) => handle(req, res));
-  const wss = new WebSocketServer({ server, path: "/ws" });
-  const rooms = new Map();
-
-  wss.on("connection", (socket, request) => {
-    const userId = getUserIdFromRequest(request);
-    if (!userId) {
-      socket.close(4001, "Unauthorized");
-      return;
+  const server = createServer(async (req, res) => {
+    try {
+      const parsedUrl = parse(req.url, true);
+      await handle(req, res, parsedUrl);
+    } catch (err) {
+      console.error('Error occurred handling', req.url, err);
+      res.statusCode = 500;
+      res.end('Internal Server Error');
     }
+  });
 
-    socket.on("message", async (raw) => {
-      try {
-        const event = JSON.parse(raw.toString());
-        if (event.type === "join") {
-          socket.conversationId = event.conversationId;
-          const room = rooms.get(event.conversationId) || new Set();
-          room.add(socket);
-          rooms.set(event.conversationId, room);
-        }
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
 
-        if (event.type === "message") {
-          const conversationId = event.conversationId;
-          const content = String(event.content || "").trim();
-          if (!conversationId || !content) return;
+  io.on('connection', (socket) => {
+    console.log('🔗 Client Connected:', socket.id);
 
-          const message = await prisma.message.create({
-            data: {
-              content,
-              senderId: userId,
-              conversationId
-            },
-            include: {
-              sender: {
-                include: { profile: true }
-              }
-            }
-          });
-
-          const peers = rooms.get(conversationId) || new Set();
-          for (const peer of peers) {
-            if (peer.readyState === 1) {
-              peer.send(JSON.stringify({ type: "message", payload: message }));
-            }
-          }
-        }
-      } catch {
-        socket.send(JSON.stringify({ type: "error", payload: "Invalid websocket payload" }));
-      }
+    // Join a specific chat room (e.g., between user A and B)
+    socket.on('join_chat', (chatId) => {
+      socket.join(chatId);
+      console.log(`User ${socket.id} joined chat ${chatId}`);
     });
 
-    socket.on("close", () => {
-      if (!socket.conversationId) return;
-      const room = rooms.get(socket.conversationId);
-      if (!room) return;
-      room.delete(socket);
-      if (!room.size) rooms.delete(socket.conversationId);
+    // Send a message
+    socket.on('send_message', (data) => {
+      const { chatId, message, senderId } = data;
+      // Broadcast to everyone in the room except the sender
+      socket.to(chatId).emit('receive_message', { 
+        message, 
+        senderId, 
+        timestamp: new Date().toISOString() 
+      });
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Client Disconnected:', socket.id);
     });
   });
 
-  server.listen(port, host, () => {
-    console.log(`Fanvior running on http://${host}:${port}`);
+  server.once('error', (err) => {
+    console.error(err);
+    process.exit(1);
+  });
+
+  server.listen(port, () => {
+    console.log(`> 🚀 Ready on http://${hostname}:${port}`);
+    console.log(`> 🔌 WebSocket Server listening for connections`);
   });
 });

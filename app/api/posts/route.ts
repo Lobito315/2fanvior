@@ -1,51 +1,59 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
 
-export const runtime = "nodejs";
-
-export async function GET() {
-  const posts = await prisma.post.findMany({
-    include: { author: { include: { profile: true } } },
-    orderBy: { createdAt: "desc" }
-  });
-  return NextResponse.json({ posts });
+// GET: Fetch all visible posts
+export async function GET(req: Request) {
+  try {
+    const posts = await prisma.post.findMany({
+      include: { 
+        creator: { 
+          select: { name: true, handle: true, avatar: true } 
+        } 
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return NextResponse.json(posts);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
+  }
 }
 
-export async function POST(request: NextRequest) {
-  const user = await getUserFromRequest(request);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const formData = await request.formData();
-  const file = formData.get("file") as File | null;
-  if (!file) {
-    return NextResponse.json({ error: "Media file is required" }, { status: 400 });
-  }
-
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-  const filename = `${randomUUID()}${extension}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadDir, filename), buffer);
-
-  const mediaUrl = `/uploads/${filename}`;
-  const mediaType = file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
-
-  const post = await prisma.post.create({
-    data: {
-      authorId: user.id,
-      title: String(formData.get("title") || ""),
-      description: String(formData.get("description") || ""),
-      visibility: String(formData.get("visibility") || "PUBLIC") as "PUBLIC" | "SUBSCRIBER_ONLY" | "PAID",
-      price: formData.get("price") ? String(formData.get("price")) : null,
-      mediaUrl,
-      mediaType
+// POST: Create a new post (Requires authentication)
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
     }
-  });
 
-  return NextResponse.redirect(new URL(`/post/${post.id}`, request.url));
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return NextResponse.json({ error: 'User profile not found.' }, { status: 404 });
+
+    // In a real app, only creators might be allowed to post.
+    if (user.role !== 'CREATOR' && user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Only approved creators can publish posts.' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { title, description, contentUrl, isLocked } = body;
+
+    if (!contentUrl) {
+      return NextResponse.json({ error: 'Media content URL is required.' }, { status: 400 });
+    }
+
+    const post = await prisma.post.create({
+      data: {
+        title,
+        description,
+        contentUrl,
+        isLocked: isLocked || false,
+        creatorId: user.id,
+      },
+    });
+
+    return NextResponse.json(post, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to publish post' }, { status: 500 });
+  }
 }

@@ -1,40 +1,40 @@
 {
-  "name": "fanvior",
-  "version": "1.0.0",
+  "name": "fanvior-app",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "node server.js",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "NODE_ENV=production node server.js",
-    "lint": "next lint",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@prisma/client": "^6.5.0",
-    "bcryptjs": "^3.0.2",
+    "@paypal/react-paypal-js": "^9.0.2",
+    "@prisma/client": "6.19.2",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
-    "framer-motion": "^12.6.3",
-    "jsonwebtoken": "^9.0.2",
-    "next": "^15.2.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.2",
-    "ws": "^8.18.1",
-    "zod": "^3.24.2"
+    "framer-motion": "^12.38.0",
+    "jsonwebtoken": "^9.0.3",
+    "next": "16.2.1",
+    "next-auth": "^4.24.13",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.9",
-    "@types/node": "^22.13.10",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@types/ws": "^8.5.14",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.5.3",
-    "prisma": "^6.5.0",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.8.2"
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.19.37",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.1",
+    "postcss": "^8.5.8",
+    "prisma": "6.19.2",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5"
   }
 }

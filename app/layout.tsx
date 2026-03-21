@@ -1,28 +1,36 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-headline",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
   title: "Fanvior",
-  description: "Premium creator subscription platform"
+  description: "A premium digital archive and editorial experience.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <body>
-        <header className="border-b border-white/10 bg-black/20">
-          <div className="shell flex items-center justify-between py-4">
-            <Link href="/" className="text-2xl font-black tracking-tight">
-              Fanvior
-            </Link>
-            <nav className="flex items-center gap-4 text-sm text-slate-300">
-              <Link href="/login">Login</Link>
-              <Link href="/signup">Sign up</Link>
-              <Link href="/creator/dashboard">Dashboard</Link>
-            </nav>
-          </div>
-        </header>
+    <html lang="en" className={`${manrope.variable} ${inter.variable} h-full antialiased dark`}>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=optional"
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-body bg-surface text-on-surface">
         {children}
       </body>
     </html>

@@ -2,23 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: #12121d;
+    --foreground: #e3e0f1;
+  }
+  
+  body {
+    background-color: theme('colors.background');
+    color: theme('colors.on-surface');
+    font-family: theme('fontFamily.body');
+    -webkit-font-smoothing: antialiased;
+  }
 }
 
-body {
-  @apply bg-ink text-white antialiased;
-  background-image: radial-gradient(circle at top, rgba(109, 108, 255, 0.12), transparent 35%), radial-gradient(circle at right, rgba(246, 95, 143, 0.12), transparent 28%);
+@layer components {
+  .glass-card {
+    background: rgba(41, 41, 53, 0.6);
+    backdrop-filter: blur(20px);
+  }
+  .brand-gradient {
+    background: linear-gradient(135deg, #6c5ce7 0%, #4029ba 100%);
+  }
 }
 
-a {
-  @apply transition-colors;
-}
-
-.shell {
-  @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
-}
-
-.panel {
-  @apply rounded-3xl border border-line bg-white/5 backdrop-blur;
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
