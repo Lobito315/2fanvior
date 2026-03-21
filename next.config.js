@@ -5,7 +5,7 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
-        pathname: '/**', // Permite todas las rutas
+        pathname: '/**',
       },
       {
         protocol: 'https',

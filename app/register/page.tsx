@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { clsx } from "clsx";
@@ -13,11 +14,32 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 export default function RegisterPage() {
   const [role, setRole] = useState<'CREATOR' | 'SUBSCRIBER'>('SUBSCRIBER');
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
   
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Connect to Registration API
-    console.log("Registering", { role });
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, handle: username, email, password, role })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      // Redirect on success
+      router.push('/login?registered=true');
+    } catch (err: any) {
+      alert("Registration failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -100,10 +122,10 @@ export default function RegisterPage() {
 
               {/* Input Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input label="Full Name" placeholder="John Doe" required />
-                <Input label="Username" placeholder="@curator" required />
-                <Input label="Email Address" type="email" placeholder="void@midnight.com" containerClassName="md:col-span-2" required />
-                <Input label="Password" type="password" placeholder="••••••••" containerClassName="md:col-span-2" required />
+                <Input label="Full Name" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required />
+                <Input label="Username" placeholder="@curator" value={username} onChange={e => setUsername(e.target.value)} required />
+                <Input label="Email Address" type="email" placeholder="void@midnight.com" value={email} onChange={e => setEmail(e.target.value)} containerClassName="md:col-span-2" required />
+                <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} containerClassName="md:col-span-2" required />
               </div>
 
               {/* Checkbox */}
@@ -118,9 +140,9 @@ export default function RegisterPage() {
 
               {/* CTA Actions */}
               <div className="pt-4 space-y-6">
-                <Button type="submit" variant="gradient" fullWidth className="h-14">
-                  Create Account
-                  <span className="material-symbols-outlined">arrow_forward</span>
+                <Button type="submit" variant="gradient" fullWidth className="h-14" disabled={loading}>
+                  {loading ? "Setting up Access..." : "Create Account"}
+                  {!loading && <span className="material-symbols-outlined">arrow_forward</span>}
                 </Button>
                 
                 <div className="flex items-center justify-center gap-2 text-sm">

@@ -4,9 +4,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SideNavBar } from '@/components/layout/SideNavBar';
 import { TopNavBar } from '@/components/layout/TopNavBar';
 import Image from 'next/image';
-import { io, Socket } from 'socket.io-client';
+import Pusher from 'pusher-js';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+
+// Initialize Pusher Client
+const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+});
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -22,7 +27,6 @@ interface Message {
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Dummy ids for demonstration
@@ -30,24 +34,27 @@ export default function ChatPage() {
   const activeChatId = "chat_123";
 
   useEffect(() => {
-    // Initialize Socket Connection
-    // Since Next.js is running the custom server.js, we connect to the same origin
-    const socketInstance = io(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
-    setSocket(socketInstance);
+    // Subscribe to Pusher channel
+    const channel = pusher.subscribe(activeChatId);
 
-    socketInstance.emit('join_chat', activeChatId);
-
-    socketInstance.on('receive_message', (data: { message: string, senderId: string, timestamp: string }) => {
-      setMessages(prev => [...prev, {
-        id: Math.random().toString(),
-        senderId: data.senderId,
-        message: data.message,
-        timestamp: data.timestamp
-      }]);
+    channel.bind('receive_message', (data: { message: string, senderId: string, timestamp: string }) => {
+      // Avoid duplicates if we sent it ourselves and it's being broadcast
+      // This depends on the Pusher configuration (exclude_sender)
+      setMessages(prev => {
+        // Simple check to avoid double adding locally sent messages if they come back from Pusher
+        if (data.senderId === currentUserId) return prev;
+        
+        return [...prev, {
+          id: Math.random().toString(),
+          senderId: data.senderId,
+          message: data.message,
+          timestamp: data.timestamp
+        }];
+      });
     });
 
     return () => {
-      socketInstance.disconnect();
+      pusher.unsubscribe(activeChatId);
     };
   }, []);
 
@@ -55,9 +62,9 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !socket) return;
+    if (!inputText.trim()) return;
 
     const newMessage = {
       id: Math.random().toString(),
@@ -68,15 +75,22 @@ export default function ChatPage() {
 
     // Optimistic UI update
     setMessages(prev => [...prev, newMessage]);
-
-    // Send to server
-    socket.emit('send_message', {
-      chatId: activeChatId,
-      message: newMessage.message,
-      senderId: currentUserId
-    });
-
     setInputText('');
+
+    // Send to server via API
+    try {
+      await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatId: activeChatId,
+          message: newMessage.message,
+          senderId: currentUserId
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to send message via Pusher API:", err);
+    }
   };
 
   return (
