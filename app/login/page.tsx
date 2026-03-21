@@ -2,17 +2,32 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Connect to NextAuth
-    console.log("Logging in", { email, password });
+    setLoading(true);
+    const res = await signIn('credentials', {
+      redirect: false,
+      email,
+      password,
+    });
+    setLoading(false);
+    
+    if (res?.error) {
+      alert("Error logging in: " + res.error);
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   return (
@@ -88,9 +103,9 @@ export default function LoginPage() {
               />
             </div>
 
-            <Button type="submit" variant="gradient" fullWidth className="h-16 text-lg mt-4 group">
-              Access Vault
-              <span className="material-symbols-outlined ml-2 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            <Button type="submit" variant="gradient" fullWidth className="h-16 text-lg mt-4 group" disabled={loading}>
+              {loading ? "Authenticating..." : "Access Vault"}
+              {!loading && <span className="material-symbols-outlined ml-2 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>}
             </Button>
           </form>
 
