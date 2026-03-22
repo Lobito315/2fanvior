@@ -15,9 +15,11 @@ const nextConfig = {
     ],
   },
   experimental: {
-    // Disable Turbopack to ensure compatibility with OpenNext manifest patching
+    // Disable Turbopack and prefetchHints to ensure compatibility with OpenNext manifest patching
     turbo: { enabled: false },
     serverExternalPackages: ['@prisma/client'],
+    ppr: false,
+    prefetchHints: false,
   },
   outputFileTracing: true,
 };
