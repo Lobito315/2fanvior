@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "build:cloudflare": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && node -e \"const fs=require('fs'); if(fs.existsSync('.open-next/worker.js')) fs.copyFileSync('.open-next/worker.js', '.open-next/_worker.js'); const r={version:1,include:['/*'],exclude:['/_next/*','/favicon.ico','/images/*','/fonts/*']}; fs.writeFileSync('.open-next/_routes.json', JSON.stringify(r)); if(fs.existsSync('.open-next/assets')) { fs.cpSync('.open-next/assets', '.open-next', { recursive: true }); fs.rmSync('.open-next/assets', { recursive: true }); } fs.writeFileSync('.open-next/.include-hidden', ''); fs.writeFileSync('.open-next/.nojekyll', '');\"",
+    "build:cloudflare": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && node -e \"const fs=require('fs'); if(fs.existsSync('.open-next/worker.js')) fs.copyFileSync('.open-next/worker.js', '.open-next/_worker.js'); const r={version:1,include:['/*'],exclude:['/assets/*','/favicon.ico']}; fs.writeFileSync('.open-next/_routes.json', JSON.stringify(r));\"",
     "deploy": "opennextjs-cloudflare deploy",
     "preview": "opennextjs-cloudflare preview",
     "start": "NODE_ENV=production node server.js",
