@@ -5,14 +5,14 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "build:cloudflare": "opennextjs-cloudflare build && node -e \"const fs=require('fs'); if(fs.existsSync('.open-next/worker.js')) fs.copyFileSync('.open-next/worker.js', '.open-next/_worker.js'); if(fs.existsSync('.open-next/assets')) fs.cpSync('.open-next/assets', '.open-next', { recursive: true });\"",
+    "build:cloudflare": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && node -e \"const fs=require('fs'); if(fs.existsSync('.open-next/worker.js')) fs.copyFileSync('.open-next/worker.js', '.open-next/_worker.js'); if(fs.existsSync('.open-next/assets')) fs.cpSync('.open-next/assets', '.open-next', { recursive: true });\"",
     "deploy": "opennextjs-cloudflare deploy",
     "preview": "opennextjs-cloudflare preview",
     "start": "NODE_ENV=production node server.js",
     "lint": "next lint"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "1.1.0",
+    "@opennextjs/cloudflare": "1.17.1",
     "@paypal/react-paypal-js": "^9.0.2",
     "@prisma/adapter-d1": "^7.5.0",
     "@prisma/client": "6.19.2",
