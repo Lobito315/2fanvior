@@ -14,6 +14,12 @@ const nextConfig = {
       }
     ],
   },
+  experimental: {
+    // Disable Turbopack to ensure compatibility with OpenNext manifest patching
+    turbo: { enabled: false },
+    serverExternalPackages: ['@prisma/client'],
+  },
+  outputFileTracing: true,
 };
 
 module.exports = nextConfig;
