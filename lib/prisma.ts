@@ -9,30 +9,25 @@ const prismaClientSingleton = (d1?: any) => {
     return new PrismaClient({ adapter });
   }
   
-  // In development, we use the local SQLite file via DATABASE_URL
   if (process.env.NODE_ENV !== 'production') {
     return new PrismaClient({
       log: ['query'],
     });
   }
 
-  // In production (Cloudflare), if we reach here and d1 is missing, it's an error.
-  // We throw a delayed error inside the client or a clearer message to debug.
-  console.error("D1 database binding 'DB' not found. Ensure it is configured in Cloudflare Dashboard.");
-  return new PrismaClient(); // This will likely fail but at least we logged the error
+  // In production (Cloudflare), if d1 is missing, we return null to avoid crashing the Worker boot.
+  // The Error 1101 is usually caused by a top-level exception.
+  console.error("D1 database binding 'DB' not found in globalThis.DB");
+  return null;
 };
 
-// Lazy initialization to avoid top-level crashes
-export const getPrisma = () => {
-    if (globalForPrisma.prisma) return globalForPrisma.prisma;
-    
-    // Check global scope (used by some Cloudflare setups) 
-    // or pass through the binding if available.
-    const d1 = (globalThis as any).DB;
-    globalForPrisma.prisma = prismaClientSingleton(d1);
-    return globalForPrisma.prisma;
-};
+// Initialize only where needed or return null to avoid boot-time exceptions
+export const prisma = globalForPrisma.prisma ?? (
+    (process.env.NODE_ENV === 'production' && !(globalThis as any).DB) 
+    ? null as any 
+    : prismaClientSingleton((globalThis as any).DB)
+);
 
-export const prisma = globalForPrisma.prisma ?? getPrisma();
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production' && prisma) {
+    globalForPrisma.prisma = prisma;
+}
