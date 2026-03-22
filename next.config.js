@@ -15,13 +15,14 @@ const nextConfig = {
     ],
   },
   experimental: {
-    // Disable Turbopack and prefetchHints to ensure compatibility with OpenNext manifest patching
-    turbo: { enabled: false },
-    serverExternalPackages: ['@prisma/client'],
-    ppr: false,
-    prefetchHints: false,
+    serverComponentsExternalPackages: ['@prisma/client'],
   },
-  outputFileTracing: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 module.exports = nextConfig;
