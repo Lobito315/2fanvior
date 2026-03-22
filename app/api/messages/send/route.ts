@@ -3,7 +3,8 @@ import { pusherServer } from '@/lib/pusher';
 
 export async function POST(req: Request) {
   try {
-    const { chatId, message, senderId } = await req.json();
+    const body = await req.json() as any;
+    const { chatId, message, senderId } = body;
 
     if (!chatId || !message || !senderId) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });

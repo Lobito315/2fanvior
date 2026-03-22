@@ -13,8 +13,8 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({ where: { email: session.user.email } });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    const body = await req.json();
-    const { targetUserId, amount, type } = body; // type = 'TIP' | 'UNLOCK' | 'SUBSCRIPTION'
+    const body = await req.json() as any;
+    const { targetUserId, amount, type, paymentMethodId, subscriptionId } = body; // type = 'TIP' | 'UNLOCK' | 'SUBSCRIPTION'
 
     if (!targetUserId || !amount || !type) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

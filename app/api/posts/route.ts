@@ -35,19 +35,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Only approved creators can publish posts.' }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { title, description, contentUrl, isLocked } = body;
+    const body = (await req.json()) as any;
+    const { title, description, content, mediaUrl, mediaType, isLocked, price, tags, schedulePublish } = body;
 
-    if (!contentUrl) {
-      return NextResponse.json({ error: 'Media content URL is required.' }, { status: 400 });
+    if (!mediaUrl && !content) {
+      return NextResponse.json({ error: 'Media URL or content is required.' }, { status: 400 });
     }
 
     const post = await prisma.post.create({
       data: {
         title,
         description,
-        contentUrl,
+        content,
+        mediaUrl,
+        mediaType,
         isLocked: isLocked || false,
+        price: price || 0,
+        tags: tags || [],
+        schedulePublish: schedulePublish ? new Date(schedulePublish) : null,
         creatorId: user.id,
       },
     });

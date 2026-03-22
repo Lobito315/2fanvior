@@ -15,7 +15,8 @@ export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { name, handle, bio, avatar } = await req.json();
+  const body = (await req.json()) as any;
+  const { name, handle, bio, avatar } = body;
   const userId = (session.user as any).id;
   
   try {

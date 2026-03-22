@@ -30,7 +30,7 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, handle: username, email, password, role })
       });
-      const data = await res.json();
+      const data = await res.json() as any;
       if (!res.ok) throw new Error(data.error);
       
       // Redirect on success

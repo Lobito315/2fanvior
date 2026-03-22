@@ -16,7 +16,7 @@ export function TopNavBar() {
       fetch('/api/users/me')
         .then(res => {
           if (!res.ok) throw new Error("Status " + res.status);
-          return res.json();
+          return res.json() as any;
         })
         .then(data => {
           if (data && !data.error) {

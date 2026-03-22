@@ -23,7 +23,7 @@ export default function SettingsPage() {
   useEffect(() => {
     // Cargar info del usuario al entrar
     fetch('/api/users/me')
-      .then(res => res.json())
+      .then(async res => await res.json() as any)
       .then(data => {
         if (!data.error) {
           setName(data.name || '');
