@@ -14,7 +14,9 @@ const nextConfig = {
       }
     ],
   },
-  serverExternalPackages: ['@prisma/client'],
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client'],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
