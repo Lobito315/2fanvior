@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "build:cloudflare": "opennextjs-cloudflare build",
+    "build:cloudflare": "opennextjs-cloudflare build && cp .open-next/worker.js .open-next/_worker.js",
     "deploy": "opennextjs-cloudflare deploy",
     "preview": "opennextjs-cloudflare preview",
     "start": "NODE_ENV=production node server.js",
