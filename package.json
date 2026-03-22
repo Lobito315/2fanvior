@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "node server.js",
-    "build": "next build && opennextjs-cloudflare build",
+    "build:next": "next build",
+    "build": "opennextjs-cloudflare build",
     "deploy": "opennextjs-cloudflare deploy",
     "preview": "opennextjs-cloudflare preview",
     "start": "NODE_ENV=production node server.js",
