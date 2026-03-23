@@ -5,12 +5,22 @@ import { PrismaD1 } from '@prisma/adapter-d1';
 if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
   try {
     const fs = require('fs');
-    if (fs && !fs.readdir) fs.readdir = () => {};
-    if (fs && !fs.readdirSync) fs.readdirSync = () => [];
+    if (fs) {
+      fs.readdir = (path: any, callback: any) => { if (callback) callback(null, []); };
+      fs.readdirSync = () => [];
+      fs.stat = (path: any, callback: any) => { if (callback) callback(null, { isDirectory: () => false }); };
+      fs.statSync = () => ({ isDirectory: () => false });
+      fs.readFile = (path: any, options: any, callback: any) => { 
+        const cb = typeof options === 'function' ? options : callback;
+        if (cb) cb(null, Buffer.from('')); 
+      };
+      fs.readFileSync = () => Buffer.from('');
+    }
   } catch (e) {
     // Ignore fs errors in edge environments
   }
 }
+
 
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
