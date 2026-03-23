@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client/edge';
 import { PrismaD1 } from '@prisma/adapter-d1';
+
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
