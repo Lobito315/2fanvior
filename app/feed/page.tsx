@@ -64,8 +64,8 @@ export default function FeedPage() {
               creatorHandle="@siennavelour"
               creatorAvatar="https://lh3.googleusercontent.com/aida-public/AB6AXuBHAlaRdiimN0kwhN49DkYsCYawwy-MT7hiqRvoMlNcg31IOixdrxh4oKSluhuLjEDfNjDID8uOXye-GJ3OtCE_YFobKYjWbEwf8IUNvTKHxi9RdZqpSwLS7HcRWFAVFk9iuvLP55v-99cqVgFtS0Kv5LToYVvDdwoaDV9Jk5GgZDt4NagagCUXphoMUvOwjSNvH-Fbi5gjpd9YnSoOjsSAXzU42F1fdCapbPGKvjfraxfi4er3r4oCSx5bQiuYePECUbOn1xTqtd90"
               timeAgo="2 hours ago"
-              caption="Midnight reverie logic sequence #04. Testing new structural gradients."
-              contentUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuC0KHFbrexzHEto9QwrXpVxQbX_jN6wlcWhcYHgjWskxxeFgEqFnCDMSfG2WGZk0xH9AP36wVjA5QJR8fV1xQSCYQlt-Anx6e4R8IqqY0npQDGQSpVjmKdIN7uhMEScyGwuLdrH5S0QS_Plzz6g7FUXazsFYGrMniaj3BoH1vrkxytFpIYErDM94MX2osaoMBb-E4PKEU67mjmw0o6K9LoLL3PMLTKdnt5jQ3a1NS3fJWtnwEkPCzyOP67n30bRPVNnhJsyY7zlTPtB"
+              content="Midnight reverie logic sequence #04. Testing new structural gradients."
+              mediaUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuC0KHFbrexzHEto9QwrXpVxQbX_jN6wlcWhcYHgjWskxxeFgEqFnCDMSfG2WGZk0xH9AP36wVjA5QJR8fV1xQSCYQlt-Anx6e4R8IqqY0npQDGQSpVjmKdIN7uhMEScyGwuLdrH5S0QS_Plzz6g7FUXazsFYGrMniaj3BoH1vrkxytFpIYErDM94MX2osaoMBb-E4PKEU67mjmw0o6K9LoLL3PMLTKdnt5jQ3a1NS3fJWtnwEkPCzyOP67n30bRPVNnhJsyY7zlTPtB"
               isLocked={false}
               likes={4242}
               comments={134}
@@ -77,8 +77,8 @@ export default function FeedPage() {
               creatorHandle="@voss_archive"
               creatorAvatar="https://lh3.googleusercontent.com/aida-public/AB6AXuBLRBUcN4Mia_YWqLd1aDEyvpQbDDZv1KSUaJSVT5kf1FSHZKOZ-ayiMdR0FQOPBJsmvE597jKEHx-PecQXXNpvZuz-TDBEgnqxcJ-5oiCBtIftYSFoFtYi3AlM90NVFB2E4kzXFlDiWnNaPuPc_vEXqF0eo0O-d4hzg7ZCbgqukklXN-THDchgsjPQhXLcQN35_-WIaQ_k8ZpKTypzSwO-_mEJDaUXBoWbu4VLZfEn0mHYp97s-J091dhzo8-ODf4Rto9KM0DlyjCC"
               timeAgo="5 hours ago"
-              caption="The complete breakdown of my latest editorial shoot. Only for subscribers."
-              contentUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuD_U9QO_qA1l_O5i5h7k3j3rX0Pq5Y3VwT_y3Fj-_S-vR3XkT_J2U-FvB8UoExFv5pB_X6bC7oA7vJ9nB8u_C7kQ2g9qN5qjF_P8oB3g9sQ2_U4vB4vX9rD3kY0T0lA4oQ9jM"
+              content="The complete breakdown of my latest editorial shoot. Only for subscribers."
+              mediaUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuD_U9QO_qA1l_O5i5h7k3j3rX0Pq5Y3VwT_y3Fj-_S-vR3XkT_J2U-FvB8UoExFv5pB_X6bC7oA7vJ9nB8u_C7kQ2g9qN5qjF_P8oB3g9sQ2_U4vB4vX9rD3kY0T0lA4oQ9jM"
               isLocked={true}
               likes={1820}
               comments={89}

@@ -33,15 +33,20 @@ model User {
 }
 
 model Post {
-  id          String   @id @default(cuid())
-  creatorId   String
-  creator     User     @relation(fields: [creatorId], references: [id])
-  contentUrl  String
-  isLocked    Boolean  @default(false)
-  title       String?
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(cuid())
+  creatorId       String
+  creator         User      @relation(fields: [creatorId], references: [id])
+  title           String?
+  description     String?
+  content         String?
+  mediaUrl        String?
+  mediaType       String?   // 'image' | 'video' | 'audio' etc.
+  isLocked        Boolean   @default(false)
+  price           Float     @default(0)
+  tags            String    @default("[]") // JSON array stored as text (SQLite)
+  schedulePublish DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Subscription {

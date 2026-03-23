@@ -5,12 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn } from '@/lib/utils';
 
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs));
-}
 
 export default function RegisterPage() {
   const [role, setRole] = useState<'CREATOR' | 'SUBSCRIBER'>('SUBSCRIBER');

@@ -8,7 +8,11 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   
   const user = await prisma.user.findUnique({ where: { id: (session.user as any).id } });
-  return NextResponse.json(user);
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  
+  // Exclude passwordHash from the response
+  const { passwordHash, ...safeUser } = user;
+  return NextResponse.json(safeUser);
 }
 
 export async function PUT(req: Request) {

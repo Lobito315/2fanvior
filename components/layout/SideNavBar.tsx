@@ -4,12 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn } from '@/lib/utils';
 
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs));
-}
 
 export function SideNavBar() {
   const pathname = usePathname();

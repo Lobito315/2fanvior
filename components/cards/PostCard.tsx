@@ -1,26 +1,36 @@
 import React from 'react';
 import Image from 'next/image';
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface PostCardProps {
   creatorName: string;
   creatorHandle: string;
   creatorAvatar: string;
   timeAgo: string;
-  contentUrl?: string;
-  caption: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  description?: string;
+  content?: string;
   isLocked: boolean;
   likes: number;
   comments: number;
   tips: string;
 }
 
-export function PostCard({ creatorName, creatorHandle, creatorAvatar, timeAgo, contentUrl, caption, isLocked, likes, comments, tips }: PostCardProps) {
+export function PostCard({ 
+  creatorName, 
+  creatorHandle, 
+  creatorAvatar, 
+  timeAgo, 
+  mediaUrl, 
+  mediaType,
+  description,
+  content, 
+  isLocked, 
+  likes, 
+  comments, 
+  tips 
+}: PostCardProps) {
   return (
     <article className="bg-surface-container-high rounded-xl overflow-hidden glass-card shadow-xl border border-outline-variant/10">
       {/* Post Header */}
@@ -44,18 +54,19 @@ export function PostCard({ creatorName, creatorHandle, creatorAvatar, timeAgo, c
 
       {/* Post Content */}
       <div className="p-6">
-        <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-6">{caption}</p>
+        {description && <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-2 font-bold">{description}</p>}
+        {content && <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-6">{content}</p>}
         
-        {contentUrl && !isLocked && (
+        {mediaUrl && !isLocked && (
           <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-outline-variant/10 mb-6 bg-surface-container-lowest">
-            <Image src={contentUrl} alt="Post content" fill className="object-cover" />
+            <Image src={mediaUrl} alt="Post content" fill className="object-cover" />
           </div>
         )}
 
         {isLocked && (
           <div className="relative w-full aspect-square md:aspect-video rounded-lg overflow-hidden mb-6 flex items-center justify-center border border-primary-container/30 bg-surface-container-low group cursor-pointer">
-            {contentUrl && (
-              <Image src={contentUrl} alt="Locked content preview" fill className="object-cover opacity-30 blur-md grayscale transition-all group-hover:blur-sm" />
+            {mediaUrl && (
+              <Image src={mediaUrl} alt="Locked content preview" fill className="object-cover opacity-30 blur-md grayscale transition-all group-hover:blur-sm" />
             )}
             <div className="relative z-10 flex flex-col items-center p-8 bg-surface-container-high/80 backdrop-blur-xl rounded-2xl border border-primary/20 shadow-2xl">
               <span className="material-symbols-outlined text-4xl text-primary mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>

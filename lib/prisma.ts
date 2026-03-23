@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaD1 } from '@prisma/adapter-d1';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
 
@@ -15,19 +16,45 @@ const prismaClientSingleton = (d1?: any) => {
     });
   }
 
-  // In production (Cloudflare), if d1 is missing, we return null to avoid crashing the Worker boot.
-  // The Error 1101 is usually caused by a top-level exception.
-  console.error("D1 database binding 'DB' not found in globalThis.DB");
+  // Fallback if no D1 binding is provided in production
   return null;
 };
 
-// Initialize only where needed or return null to avoid boot-time exceptions
-export const prisma = globalForPrisma.prisma ?? (
-    (process.env.NODE_ENV === 'production' && !(globalThis as any).DB) 
-    ? null as any 
-    : prismaClientSingleton((globalThis as any).DB)
-);
+const getPrisma = () => {
+  if (globalForPrisma.prisma) return globalForPrisma.prisma;
 
-if (process.env.NODE_ENV !== 'production' && prisma) {
-    globalForPrisma.prisma = prisma;
-}
+  let d1;
+  if (process.env.NODE_ENV === 'production') {
+    d1 = (globalThis as any).DB;
+    if (!d1) {
+      try {
+        const ctx = getCloudflareContext();
+        d1 = (ctx?.env as any)?.DB;
+      } catch (e) {
+        // Ignore context errors
+      }
+    }
+  }
+
+  const client = prismaClientSingleton(d1);
+
+  if (process.env.NODE_ENV !== 'production' && client) {
+    globalForPrisma.prisma = client;
+  }
+  
+  // Cache in production isolate too so it doesn't create new instances per edge request
+  if (process.env.NODE_ENV === 'production' && client) {
+      globalForPrisma.prisma = client;
+  }
+
+  return client;
+};
+
+// Export a proxy so existing `prisma.user...` calls work transparently
+export const prisma = new Proxy({} as PrismaClient, {
+  get: (target, prop) => {
+    const client = getPrisma();
+    if (!client) throw new Error("Prisma client not initialized (D1 database binding 'DB' missing)");
+    return (client as any)[prop];
+  }
+});

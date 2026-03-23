@@ -5,8 +5,7 @@ import { SideNavBar } from '@/components/layout/SideNavBar';
 import { TopNavBar } from '@/components/layout/TopNavBar';
 import Image from 'next/image';
 import Pusher from 'pusher-js';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '@/lib/utils';
 
 // Initialize Pusher Client safely for SSR
 const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY || '';
@@ -15,10 +14,6 @@ const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'us2';
 const pusher = typeof window !== 'undefined' && pusherKey
   ? new Pusher(pusherKey, { cluster: pusherCluster })
   : null;
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs));
-}
 
 interface Message {
   id: string;

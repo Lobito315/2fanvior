@@ -1,10 +1,6 @@
 import React, { InputHTMLAttributes } from 'react';
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn } from '@/lib/utils';
 
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs));
-}
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
