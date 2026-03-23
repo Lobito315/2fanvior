@@ -1,5 +1,20 @@
 import { NextResponse } from "next/server";
+
+// Polyfill for fs (fixes Cloudflare/unenv issues)
+if (process.env.NODE_ENV === 'production') {
+  try {
+    const fs = require('fs');
+    if (fs) {
+      fs.readdir = (p: any, cb: any) => { if (cb) cb(null, []); };
+      fs.readdirSync = () => [];
+      fs.stat = (p: any, cb: any) => { if (cb) cb(null, { isDirectory: () => false }); };
+      fs.statSync = () => ({ isDirectory: () => false });
+    }
+  } catch (e) {}
+}
+
 import { prisma } from "@/lib/prisma";
+
 import bcrypt from "bcryptjs";
 
 
