@@ -1,8 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaD1 } from '@prisma/adapter-d1';
 
+// Polyfill for fs.readdir (fixes Cloudflare/unenv issues)
+if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
+  try {
+    const fs = require('fs');
+    if (fs && !fs.readdir) fs.readdir = () => {};
+    if (fs && !fs.readdirSync) fs.readdirSync = () => [];
+  } catch (e) {
+    // Ignore fs errors in edge environments
+  }
+}
 
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
 
