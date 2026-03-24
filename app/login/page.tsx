@@ -33,7 +33,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       setLoading(false);
-      setError('An unexpected error occurred. Please try again.');
+      setError(err?.message || 'An unexpected error occurred. Please try again.');
     }
   };
 

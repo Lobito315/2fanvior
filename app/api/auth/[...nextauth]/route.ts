@@ -2,8 +2,7 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { prisma } from "@/lib/prisma";
-
-import bcrypt from "bcryptjs";
+import { verifyPassword } from "@/lib/password";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -27,8 +26,8 @@ export const authOptions: NextAuthOptions = {
             throw new Error('No user found');
           }
 
-          // Use compareSync to avoid setTimeout issues in Cloudflare Workers
-          const isValid = bcrypt.compareSync(credentials.password, user.passwordHash);
+          // Use Web Crypto API for password verification (Cloudflare compatible)
+          const isValid = await verifyPassword(credentials.password, user.passwordHash);
 
           if (!isValid) {
             throw new Error('Invalid password');

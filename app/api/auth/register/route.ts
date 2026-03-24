@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { hashPassword } from "@/lib/password";
 
 
 
@@ -25,8 +25,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email or username already taken" }, { status: 409 });
     }
 
-    // Hashear contraseña
-    const passwordHash = bcrypt.hashSync(password, 10);
+    // Hashear contraseña con Web Crypto API (compatible con Cloudflare)
+    const passwordHash = await hashPassword(password);
 
     // Crear el usuario
     const user = await prisma.user.create({
