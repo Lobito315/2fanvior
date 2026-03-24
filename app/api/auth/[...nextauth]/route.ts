@@ -76,9 +76,14 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV !== 'production',
 };
 
-const handler = NextAuth(authOptions);
+const handler = (req: Request, ctx: any) => {
+  return NextAuth({
+    ...authOptions,
+    secret: process.env.NEXTAUTH_SECRET,
+    debug: process.env.NODE_ENV !== 'production',
+  })(req, ctx);
+};
+
 export { handler as GET, handler as POST };

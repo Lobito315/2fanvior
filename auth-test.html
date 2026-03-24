@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test API</title></head>
+<body>
+<pre id="output">Waiting...</pre>
+<script>
+  fetch('https://2fanvior.pages.dev/api/auth/test-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'quieromiplr@proton.me', password: 'test1234' })
+  })
+  .then(async res => {
+    const text = await res.text();
+    document.getElementById('output').innerText = `Status: ${res.status}\nBody: ${text}`;
+  })
+  .catch(err => {
+    document.getElementById('output').innerText = `Error: ${err.message}`;
+  });
+</script>
+</body>
+</html>
