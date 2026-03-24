@@ -11,22 +11,29 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const res = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    });
-    setLoading(false);
-    
-    if (res?.error) {
-      alert("Error logging in: " + res.error);
-    } else {
-      router.push('/dashboard');
+    setError('');
+    try {
+      const res = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+      setLoading(false);
+      
+      if (res?.error) {
+        setError(res.error === 'CredentialsSignin' ? 'Invalid email or password.' : res.error);
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setError('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -102,6 +109,12 @@ export default function LoginPage() {
                 required
               />
             </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
+                <p className="text-red-400 text-sm font-medium">{error}</p>
+              </div>
+            )}
 
             <Button type="submit" variant="gradient" fullWidth className="h-16 text-lg mt-4 group" disabled={loading}>
               {loading ? "Authenticating..." : "Access Vault"}
