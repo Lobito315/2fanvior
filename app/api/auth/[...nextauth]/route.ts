@@ -94,7 +94,10 @@ const handler = async (req: Request, ctx: any) => {
       return NextResponse.json({
         error: "NextAuth Internal 500",
         originalBody: text,
-        secretWasPresent: !!process.env.NEXTAUTH_SECRET
+        secretWasPresent: !!process.env.NEXTAUTH_SECRET,
+        reqMethod: req.method,
+        reqUrl: req.url,
+        nextAuthUrl: process.env.NEXTAUTH_URL || "MISSING"
       }, { status: 500 });
     }
 
@@ -103,7 +106,10 @@ const handler = async (req: Request, ctx: any) => {
     return NextResponse.json({
       error: "NextAuth Exception",
       message: e.message,
-      stack: e.stack?.substring(0, 500)
+      stack: e.stack?.substring(0, 500),
+      reqMethod: req.method,
+      reqUrl: req.url,
+      nextAuthUrl: process.env.NEXTAUTH_URL || "MISSING"
     }, { status: 500 });
   }
 };
