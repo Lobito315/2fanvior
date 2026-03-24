@@ -82,6 +82,13 @@ import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
   try {
+    // Saneamiento robusto: Si la URL de Cloudflare viene sin "https://", NextAuth crasheará al hacer new URL()
+    let verifiedUrl = process.env.NEXTAUTH_URL;
+    if (verifiedUrl && !verifiedUrl.startsWith("http")) {
+      verifiedUrl = `https://${verifiedUrl}`;
+      process.env.NEXTAUTH_URL = verifiedUrl;
+    }
+
     const response = await NextAuth({
       ...authOptions,
       secret: process.env.NEXTAUTH_SECRET || "fallback_secret_that_is_at_least_32_characters_long_for_jwt_123",
