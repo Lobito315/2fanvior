@@ -4,7 +4,7 @@
  * No dependency on bcrypt/bcryptjs
  */
 
-const ITERATIONS = 100000;
+const ITERATIONS = 10000;
 const KEY_LENGTH = 64; // bytes
 const ALGORITHM = 'PBKDF2';
 const HASH = 'SHA-512';
@@ -15,12 +15,35 @@ function bufferToHex(buffer: ArrayBuffer): string {
     .join('');
 }
 
-function hexToBuffer(hex: string): Uint8Array {
+function hexToBuffer(hex: string): ArrayBuffer {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
   }
-  return bytes;
+  return bytes.buffer;
+}
+
+async function deriveKey(password: string, salt: ArrayBuffer): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder();
+  
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    { name: ALGORITHM },
+    false,
+    ['deriveBits']
+  );
+
+  return crypto.subtle.deriveBits(
+    {
+      name: ALGORITHM,
+      salt: salt,
+      iterations: ITERATIONS,
+      hash: HASH,
+    },
+    keyMaterial,
+    KEY_LENGTH * 8
+  );
 }
 
 /**
@@ -28,29 +51,12 @@ function hexToBuffer(hex: string): Uint8Array {
  * Returns a string in format: salt:hash (both hex-encoded)
  */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const encoder = new TextEncoder();
-  
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password),
-    ALGORITHM,
-    false,
-    ['deriveBits']
-  );
+  const saltArray = new Uint8Array(16);
+  crypto.getRandomValues(saltArray);
+  const salt = saltArray.buffer;
 
-  const derivedBits = await crypto.subtle.deriveBits(
-    {
-      name: ALGORITHM,
-      salt: salt.buffer as ArrayBuffer,
-      iterations: ITERATIONS,
-      hash: HASH,
-    },
-    keyMaterial,
-    KEY_LENGTH * 8
-  );
-
-  return `${bufferToHex(salt.buffer as ArrayBuffer)}:${bufferToHex(derivedBits)}`;
+  const derivedBits = await deriveKey(password, salt);
+  return `${bufferToHex(salt)}:${bufferToHex(derivedBits)}`;
 }
 
 /**
@@ -58,31 +64,26 @@ export async function hashPassword(password: string): Promise<string> {
  * The stored hash should be in format: salt:hash (both hex-encoded)
  */
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
-  const [saltHex, hashHex] = storedHash.split(':');
-  if (!saltHex || !hashHex) return false;
+  // If the hash doesn't contain ':', it's not our format (might be bcrypt)
+  if (!storedHash.includes(':')) {
+    return false;
+  }
 
+  const parts = storedHash.split(':');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    return false;
+  }
+
+  const [saltHex, hashHex] = parts;
   const salt = hexToBuffer(saltHex);
-  const encoder = new TextEncoder();
-
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password),
-    ALGORITHM,
-    false,
-    ['deriveBits']
-  );
-
-  const derivedBits = await crypto.subtle.deriveBits(
-    {
-      name: ALGORITHM,
-      salt: salt.buffer as ArrayBuffer,
-      iterations: ITERATIONS,
-      hash: HASH,
-    },
-    keyMaterial,
-    KEY_LENGTH * 8
-  );
-
+  const derivedBits = await deriveKey(password, salt);
   const newHash = bufferToHex(derivedBits);
-  return newHash === hashHex;
+
+  // Constant-time comparison to prevent timing attacks
+  if (newHash.length !== hashHex.length) return false;
+  let result = 0;
+  for (let i = 0; i < newHash.length; i++) {
+    result |= newHash.charCodeAt(i) ^ hashHex.charCodeAt(i);
+  }
+  return result === 0;
 }
