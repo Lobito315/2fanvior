@@ -8,7 +8,9 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json() as any;
-    const { name, handle, email, password, role } = body;
+    const { name, handle, role } = body;
+    const email = body.email?.toLowerCase().trim();
+    const password = body.password;
 
     if (!name || !handle || !email || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

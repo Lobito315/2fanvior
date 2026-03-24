@@ -16,9 +16,6 @@ const nextConfig = {
       }
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
   // Only apply assetPrefix in production (Cloudflare Pages).
   // In local dev this would break CSS/JS loading.
   assetPrefix: isProd ? '/assets' : undefined,

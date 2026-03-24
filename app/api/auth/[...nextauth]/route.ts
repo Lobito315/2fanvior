@@ -18,8 +18,10 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Email or password missing');
           }
 
+          const email = credentials.email.toLowerCase().trim();
+
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email }
+            where: { email }
           });
 
           if (!user || !user.passwordHash) {
