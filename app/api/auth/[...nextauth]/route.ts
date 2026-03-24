@@ -78,12 +78,34 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-const handler = (req: Request, ctx: any) => {
-  return NextAuth({
-    ...authOptions,
-    secret: process.env.NEXTAUTH_SECRET,
-    debug: process.env.NODE_ENV !== 'production',
-  })(req, ctx);
+import { NextResponse } from "next/server";
+
+const handler = async (req: Request, ctx: any) => {
+  try {
+    const response = await NextAuth({
+      ...authOptions,
+      secret: process.env.NEXTAUTH_SECRET || "fallback_secret_that_is_at_least_32_characters_long_for_jwt_123",
+      debug: true,
+    })(req, ctx);
+
+    // Si NextAuth devuelve 500 (crash interno), interceptamos la respuesta
+    if (response.status === 500) {
+      const text = await response.clone().text().catch(() => "No text body");
+      return NextResponse.json({
+        error: "NextAuth Internal 500",
+        originalBody: text,
+        secretWasPresent: !!process.env.NEXTAUTH_SECRET
+      }, { status: 500 });
+    }
+
+    return response;
+  } catch (e: any) {
+    return NextResponse.json({
+      error: "NextAuth Exception",
+      message: e.message,
+      stack: e.stack?.substring(0, 500)
+    }, { status: 500 });
+  }
 };
 
 export { handler as GET, handler as POST };
