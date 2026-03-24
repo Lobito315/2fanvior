@@ -22,17 +22,6 @@ const prismaClientSingleton = (d1?: any) => {
   return null;
 };
 
-  
-  if (process.env.NODE_ENV !== 'production') {
-    return new PrismaClient({
-      log: ['query'],
-    });
-  }
-
-  // Fallback if no D1 binding is provided in production
-  return null;
-};
-
 const getPrisma = () => {
   if (globalForPrisma.prisma) return globalForPrisma.prisma;
 
