@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             name: user.name,
             email: user.email,
-            image: user.avatar,
+            image: user.avatar && user.avatar.length < 2000 ? user.avatar : null,
           };
         } catch (error: any) {
           console.error('Authorize error:', error?.message || error);

@@ -89,6 +89,10 @@ export default function SettingsPage() {
                 <span className="material-symbols-outlined text-[18px]">security</span>
                 Security & Access
               </button>
+              <button onClick={() => setActiveTab('NOTIFICATIONS')} className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all ${activeTab === 'NOTIFICATIONS' ? 'bg-primary-container text-on-primary-container' : 'text-outline hover:bg-surface-container-low hover:text-on-surface'}`}>
+                <span className="material-symbols-outlined text-[18px]">notifications</span>
+                Alerts & Feedback
+              </button>
             </nav>
           </aside>
 
@@ -156,7 +160,46 @@ export default function SettingsPage() {
               </div>
             )}
             
-            {activeTab !== 'PROFILE' && (
+            {activeTab === 'NOTIFICATIONS' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <header>
+                  <h3 className="font-headline text-2xl font-bold tracking-tight">Notification Preferences</h3>
+                  <p className="text-sm font-body text-outline mt-1">Control how and when Fanvior contacts you.</p>
+                </header>
+
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-surface-container-low border border-outline/10 rounded-lg">
+                    <div>
+                      <h4 className="text-sm font-bold text-on-surface">Email Newsletters</h4>
+                      <p className="text-xs text-outline font-body mt-1">Curated drops and platform updates</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-5 h-5 rounded border-outline/30 bg-surface-container-lowest text-primary focus:ring-0 focus:ring-offset-0 transition-colors" />
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-surface-container-low border border-outline/10 rounded-lg">
+                    <div>
+                      <h4 className="text-sm font-bold text-on-surface">Push Notifications</h4>
+                      <p className="text-xs text-outline font-body mt-1">Real-time alerts for likes, tips, and comments</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-5 h-5 rounded border-outline/30 bg-surface-container-lowest text-primary focus:ring-0 focus:ring-offset-0 transition-colors" />
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-surface-container-low border border-outline/10 rounded-lg">
+                    <div>
+                      <h4 className="text-sm font-bold text-on-surface">New Subscriber Alerts</h4>
+                      <p className="text-xs text-outline font-body mt-1">Get notified immediately when someone joins your tier</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-5 h-5 rounded border-outline/30 bg-surface-container-lowest text-primary focus:ring-0 focus:ring-offset-0 transition-colors" />
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-outline/10">
+                  <Button variant="gradient" className="px-8 shadow-lg shadow-primary/20">
+                    Save Preferences
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeTab !== 'PROFILE' && activeTab !== 'NOTIFICATIONS' && (
               <div className="flex flex-col items-center justify-center h-64 opacity-50 space-y-4 animate-in fade-in duration-500">
                 <span className="material-symbols-outlined text-4xl text-outline">construction</span>
                 <p className="font-label uppercase tracking-widest text-outline">Development Phase Area</p>

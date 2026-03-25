@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "build:cloudflare": "npx prisma generate && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && node -e \"const fs=require('fs'); if(fs.existsSync('.open-next/worker.js')) fs.copyFileSync('.open-next/worker.js', '.open-next/_worker.js'); const r={version:1,include:['/*'],exclude:['/assets/*','/favicon.ico']}; fs.writeFileSync('.open-next/_routes.json', JSON.stringify(r));\"",
-    "deploy": "opennextjs-cloudflare deploy",
+    "build:cloudflare": "npx prisma generate && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && node scripts/post-build.mjs",
+    "deploy": "wrangler pages deploy .open-next",
     "preview": "opennextjs-cloudflare preview",
     "start": "NODE_ENV=production node server.js",
     "lint": "next lint"

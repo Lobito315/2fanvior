@@ -1,6 +1,4 @@
 /** @type {import('next').NextConfig} */
-const isProd = process.env.NODE_ENV === 'production';
-
 const nextConfig = {
   images: {
     remotePatterns: [
@@ -16,9 +14,6 @@ const nextConfig = {
       }
     ],
   },
-  // Only apply assetPrefix in production (Cloudflare Pages).
-  // In local dev this would break CSS/JS loading.
-  assetPrefix: isProd ? '/assets' : undefined,
   typescript: {
     ignoreBuildErrors: true,
   },
