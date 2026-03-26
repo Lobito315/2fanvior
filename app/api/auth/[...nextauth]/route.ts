@@ -4,29 +4,25 @@ import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
   const origin = "https://2fanvior.pages.dev";
-  
-  // CRITICAL: NextAuth v4 on Edge fails if req.url is relative.
-  // We must proxy the request and force an absolute URL.
-  const absoluteUrl = req.url.startsWith('http') 
-    ? req.url 
-    : `${origin}${req.url.startsWith('/') ? '' : '/'}${req.url}`;
-  
-  console.log("NextAuth Edge Proxying:", { original: req.url, absolute: absoluteUrl });
+  const absoluteUrl = new URL(req.url, origin).toString();
 
-  // Clone the request with the absolute URL
-  const modifiedReq = new Request(absoluteUrl, {
-    method: req.method,
-    headers: req.headers,
-    body: req.body,
-    duplex: 'half'
-  } as any);
+  // JavaScript Proxy to override URL property dynamically
+  // This is safer than cloning as it preserves native methods and the request body
+  const proxiedReq = new Proxy(req, {
+    get(target: any, prop) {
+      if (prop === 'url') return absoluteUrl;
+      // Handle NextRequest style access
+      if (prop === 'nextUrl') return new URL(absoluteUrl);
+      const value = Reflect.get(target, prop);
+      if (typeof value === 'function') return value.bind(target);
+      return value;
+    }
+  }) as any;
 
   try {
-    // We use the authOptions from lib/auth.ts
-    const response = await NextAuth(authOptions)(modifiedReq, ctx);
-    return response;
+    return await NextAuth(authOptions)(proxiedReq, ctx);
   } catch (err: any) {
-    console.error("NextAuth Handler Error:", err);
+    console.error("NextAuth Proxy Crash:", err);
     return NextResponse.json({ 
       error: "Edge Proxy Crash", 
       message: err.message,
