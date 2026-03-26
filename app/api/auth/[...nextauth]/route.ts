@@ -83,61 +83,32 @@ export const authOptions: NextAuthOptions = {
 import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
-  const reqUrl = req.url || "";
-  let nextAuthUrl = process.env.NEXTAUTH_URL;
+  // Cloudflare Edge Fix: NextAuth v4 requires an absolute NEXTAUTH_URL
+  const origin = new URL(req.url).origin;
+  
+  // Try to use precisely the origin as the NEXTAUTH_URL if env is missing or invalid
+  if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("undefined")) {
+    process.env.NEXTAUTH_URL = origin;
+  }
+
+  // Ensure it has https in production
+  if (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.startsWith('http')) {
+     process.env.NEXTAUTH_URL = `https://${process.env.NEXTAUTH_URL}`;
+  }
 
   try {
-    // 1. Detect and fix missing NEXTAUTH_URL
-    if (!nextAuthUrl || nextAuthUrl === "undefined" || nextAuthUrl === "") {
-      try {
-        const urlObj = new URL(reqUrl);
-        nextAuthUrl = urlObj.origin;
-      } catch (e) {
-        nextAuthUrl = "https://2fanvior.pages.dev"; // Hardcoded fallback for this specific deployment
-      }
-    }
-
-    // 2. Protocol enforcement
-    if (nextAuthUrl && !nextAuthUrl.startsWith("http")) {
-      nextAuthUrl = `https://${nextAuthUrl}`;
-    }
-
-    // 3. Inject back to env (NextAuth reads from here)
-    process.env.NEXTAUTH_URL = nextAuthUrl;
-
-    const options: NextAuthOptions = {
+    const res = await NextAuth({
       ...authOptions,
-      secret: process.env.NEXTAUTH_SECRET || "fallback_secret_that_is_at_least_32_characters_long_for_jwt_123",
-    };
-
-    const response = await NextAuth(options)(req, ctx);
-
-    // Si NextAuth devuelve 500 (crash interno), interceptamos la respuesta
-    if (response.status === 500) {
-      const cloned = response.clone();
-      const text = await cloned.text().catch(() => "No text body");
-      return NextResponse.json({
-        error: "NextAuth Internal 500",
-        diagnostics: {
-          reqUrl: reqUrl,
-          derivedNextAuthUrl: nextAuthUrl,
-          envNextAuthUrl: process.env.NEXTAUTH_URL,
-          hasSecret: !!process.env.NEXTAUTH_SECRET,
-          rawBody: text.substring(0, 500)
-        }
-      }, { status: 500 });
-    }
-
-    return response;
-  } catch (e: any) {
-    return NextResponse.json({
-      error: "NextAuth Exception",
-      message: e.message,
-      diagnostics: {
-        reqUrl: reqUrl,
-        derivedNextAuthUrl: nextAuthUrl,
-        stack: e.stack?.substring(0, 300)
-      }
+      secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890",
+    })(req, ctx);
+    
+    return res;
+  } catch (err: any) {
+    console.error("NextAuth Edge Error:", err);
+    return NextResponse.json({ 
+      error: "Authentication Failure", 
+      message: err.message,
+      url: process.env.NEXTAUTH_URL 
     }, { status: 500 });
   }
 };
