@@ -3,6 +3,71 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import { verifyPassword } from "./password";
 
+// Web Crypto based JWT functions for Cloudflare compatibility
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_at_least_12345";
+
+async function getCryptoKey() {
+  const enc = new TextEncoder();
+  return crypto.subtle.importKey(
+    "raw",
+    enc.encode(JWT_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+}
+
+const jwtEncode = async ({ token }: { token?: any }) => {
+  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, "");
+  const payload = btoa(JSON.stringify({ ...token, iat: Math.floor(Date.now() / 1000) })).replace(/=/g, "");
+  const data = `${header}.${payload}`;
+  
+  const key = await getCryptoKey();
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(data)
+  );
+  
+  const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+    
+  return `${data}.${signatureBase64}`;
+};
+
+const jwtDecode = async ({ token }: { token?: string }) => {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  
+  const [header, payload, signature] = parts;
+  const data = `${header}.${payload}`;
+  
+  try {
+    const key = await getCryptoKey();
+    const sigArray = new Uint8Array(
+      atob(signature.replace(/-/g, "+").replace(/_/g, "/"))
+        .split("")
+        .map((c) => c.charCodeAt(0))
+    );
+    
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      sigArray,
+      new TextEncoder().encode(data)
+    );
+    
+    if (!isValid) return null;
+    return JSON.parse(atob(payload));
+  } catch (err) {
+    console.error("JWT Decode Error:", err);
+    return null;
+  }
+};
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -27,7 +92,6 @@ export const authOptions: NextAuthOptions = {
             throw new Error('No user found');
           }
 
-          // Use Web Crypto API for password verification (Cloudflare compatible)
           const isValid = await verifyPassword(credentials.password, user.passwordHash);
 
           if (!isValid) {
@@ -38,7 +102,7 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             name: user.name,
             email: user.email,
-            image: user.avatar && user.avatar.length < 2000 ? user.avatar : null,
+            role: (user as any).role || 'USER',
           };
         } catch (error: any) {
           console.error('Authorize error:', error?.message || error);
@@ -49,6 +113,10 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt"
+  },
+  jwt: {
+    encode: jwtEncode as any,
+    decode: jwtDecode as any,
   },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
@@ -76,8 +144,8 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_at_least_12345",
+  secret: JWT_SECRET,
   useSecureCookies: process.env.NODE_ENV === "production",
-  // @ts-ignore - trustHost is supported in v4.24.13 but might missing in some type definitions
+  //@ts-ignore
   trustHost: true,
 };
