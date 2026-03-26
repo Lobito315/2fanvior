@@ -78,4 +78,6 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_at_least_12345",
   useSecureCookies: process.env.NODE_ENV === "production",
+  // @ts-ignore - trustHost is supported in v4.24.13 but might missing in some type definitions
+  trustHost: true,
 };
