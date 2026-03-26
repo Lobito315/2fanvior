@@ -19,34 +19,27 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      // Manual fetch to bypass NextAuth client-side URL construction bugs
-      const response = await fetch('/api/auth/callback/credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          csrfToken: await fetch('/api/auth/csrf').then(res => res.json()).then(data => data.csrfToken),
-          callbackUrl: 'https://2fanvior.pages.dev/dashboard',
-          json: true
-        })
+      const res = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+        callbackUrl: '/dashboard'
       });
 
-      const data = (await response.json()) as any;
-      console.log('Manual SignIn Response:', data);
+      console.log('SignIn Response:', res);
 
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Login failed');
+      if (res?.error) {
+        setError(res.error === 'CredentialsSignin' ? 'Invalid email or password.' : res.error);
+      } else if (res?.ok) {
+        window.location.href = '/dashboard';
       }
-
-      // If success, then we can use the SDK to hydrate the session or just redirect
-      window.location.href = '/dashboard';
     } catch (err: any) {
-      console.error('Manual SignIn Exception:', err);
-      setError(err.message || 'An unexpected error occurred. Please try again.');
+      console.error('SignIn Exception:', err);
+      setError(err?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
+
   };
 
   return (
@@ -70,7 +63,7 @@ export default function LoginPage() {
         <div className="text-center space-y-4">
           <h1 className="font-headline text-4xl md:text-5xl font-extrabold text-on-surface tracking-tighter relative inline-block">
             Fanvior
-            <span className="absolute -top-6 -right-16 text-[8px] text-lime-400 font-mono bg-white/5 px-2 rounded">B_118_NATIVE</span>
+            <span className="absolute -top-6 -right-16 text-[8px] text-emerald-400 font-mono bg-white/5 px-2 rounded">B_119_SUCCESS</span>
           </h1>
           <p className="font-body text-outline text-lg tracking-tight">Enter the sanctuary of rare aesthetics.</p>
         </div>
