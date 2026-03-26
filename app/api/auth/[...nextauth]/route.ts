@@ -86,10 +86,18 @@ const handler = async (req: Request, ctx: any) => {
   try {
     // Saneamiento robusto: Si la URL de Cloudflare viene sin "https://", NextAuth crasheará al hacer new URL()
     let verifiedUrl = process.env.NEXTAUTH_URL;
-    if (verifiedUrl && !verifiedUrl.startsWith("http")) {
+    if (!verifiedUrl || verifiedUrl === "undefined") {
+      // Fallback to request origin gracefully
+      try {
+        const origin = new URL(req.url).origin;
+        verifiedUrl = origin;
+      } catch (e) {
+        verifiedUrl = "http://localhost:3000"; // Absolute fallback to prevent NextAuth Invalid URL crash
+      }
+    } else if (!verifiedUrl.startsWith("http")) {
       verifiedUrl = `https://${verifiedUrl}`;
-      process.env.NEXTAUTH_URL = verifiedUrl;
     }
+    process.env.NEXTAUTH_URL = verifiedUrl;
 
     const response = await NextAuth({
       ...authOptions,

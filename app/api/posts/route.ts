@@ -21,6 +21,23 @@ export async function GET(req: Request) {
   }
 }
 
+import { z } from "zod";
+
+const postSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  content: z.string().optional(),
+  mediaUrl: z.string().url().optional().or(z.literal('')),
+  mediaType: z.string().optional(),
+  isLocked: z.boolean().optional().default(false),
+  price: z.number().nonnegative().optional().default(0),
+  tags: z.array(z.string()).optional().default([]),
+  schedulePublish: z.string().datetime().optional().nullable(),
+}).refine(data => data.mediaUrl || data.content, {
+  message: "Media URL or content is required",
+  path: ["content"]
+});
+
 // POST: Create a new post (Requires authentication)
 export async function POST(req: Request) {
   try {
@@ -37,30 +54,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Only approved creators can publish posts.' }, { status: 403 });
     }
 
-    const body = (await req.json()) as any;
-    const { title, description, content, mediaUrl, mediaType, isLocked, price, tags, schedulePublish } = body;
-
-    if (!mediaUrl && !content) {
-      return NextResponse.json({ error: 'Media URL or content is required.' }, { status: 400 });
+    const body = await req.json();
+    const result = postSchema.safeParse(body);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.format() }, 
+        { status: 400 }
+      );
     }
+
+    const { title, description, content, mediaUrl, mediaType, isLocked, price, tags, schedulePublish } = result.data;
 
     const post = await prisma.post.create({
       data: {
-        title,
+        title: title || "",
         description,
         content,
-        mediaUrl,
+        mediaUrl: mediaUrl || null,
         mediaType,
-        isLocked: isLocked || false,
-        price: price || 0,
-        tags: JSON.stringify(tags || []),
+        isLocked,
+        price,
+        tags: JSON.stringify(tags),
         schedulePublish: schedulePublish ? new Date(schedulePublish) : null,
         creatorId: user.id,
       },
     });
 
     return NextResponse.json(post, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to publish post' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to publish post', details: error.message }, { status: 500 });
   }
 }

@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
+    "dev": "next dev",
     "build": "next build",
     "build:cloudflare": "npx prisma generate && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && node scripts/post-build.mjs",
     "deploy": "wrangler pages deploy .open-next",
     "preview": "opennextjs-cloudflare preview",
-    "start": "NODE_ENV=production node server.js",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -26,9 +26,8 @@
     "pusher-js": "^8.4.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

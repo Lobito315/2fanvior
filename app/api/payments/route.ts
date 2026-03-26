@@ -3,6 +3,16 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
+import { z } from "zod";
+
+const paymentSchema = z.object({
+  targetUserId: z.string().min(1, "Target User ID is required"),
+  amount: z.number().positive("Amount must be greater than zero"),
+  type: z.enum(["TIP", "UNLOCK", "SUBSCRIPTION"]),
+  paymentMethodId: z.string().optional(),
+  subscriptionId: z.string().optional()
+});
+
 // POST: Initialize a payment (Tip, Unlock, or Subscribe)
 export async function POST(req: Request) {
   try {
@@ -14,18 +24,23 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({ where: { email: session.user.email } });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    const body = await req.json() as any;
-    const { targetUserId, amount, type, paymentMethodId, subscriptionId } = body; // type = 'TIP' | 'UNLOCK' | 'SUBSCRIPTION'
-
-    if (!targetUserId || !amount || !type) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const body = await req.json();
+    const result = paymentSchema.safeParse(body);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.format() }, 
+        { status: 400 }
+      );
     }
+    
+    const { targetUserId, amount, type, paymentMethodId, subscriptionId } = result.data;
 
     // Record the pending payment in database
     const payment = await prisma.payment.create({
       data: {
         userId: user.id, // The person paying
-        amount: parseFloat(amount),
+        amount: amount,
         currency: 'USD',
         type: type,
         status: 'PENDING',
@@ -42,8 +57,8 @@ export async function POST(req: Request) {
       message: "Payment initialized. Await PayPal confirmation." 
     }, { status: 201 });
 
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to process payment' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to process payment', details: error.message }, { status: 500 });
   }
 }
 

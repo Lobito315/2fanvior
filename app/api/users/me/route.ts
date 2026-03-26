@@ -15,18 +15,36 @@ export async function GET() {
   return NextResponse.json(safeUser);
 }
 
+import { z } from "zod";
+
+const updateProfileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  handle: z.string().min(3, "Handle must be at least 3 characters").optional(),
+  bio: z.string().max(160, "Bio cannot exceed 160 characters").optional(),
+  avatar: z.string().url("Avatar must be a valid URL").optional().or(z.literal(''))
+});
+
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as any;
-  const { name, handle, bio, avatar } = body;
-  const userId = (session.user as any).id;
-  
   try {
+    const body = await req.json();
+    const result = updateProfileSchema.safeParse(body);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: result.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const { name, handle, bio, avatar } = result.data;
+    const userId = (session.user as any).id;
+    
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { name, handle, bio, avatar }
+      data: { name, handle, bio, avatar: avatar || null }
     });
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error: any) {

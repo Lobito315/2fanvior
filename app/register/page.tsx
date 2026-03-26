@@ -15,11 +15,13 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -27,12 +29,19 @@ export default function RegisterPage() {
         body: JSON.stringify({ name, handle: username, email, password, role })
       });
       const data = await res.json() as any;
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        if (data.details) {
+            // Zod error parsing
+            const firstError = Object.values(data.details).find((val: any) => val?._errors?.length > 0) as any;
+            throw new Error(firstError?._errors[0] || data.error);
+        }
+        throw new Error(data.error || 'Failed to register');
+      }
       
       // Redirect on success
       router.push('/login?registered=true');
     } catch (err: any) {
-      alert("Registration failed: " + err.message);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -133,6 +142,12 @@ export default function RegisterPage() {
                   I verify that I am <span className="text-primary">18+ years of age</span> and agree to the <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
                 </label>
               </div>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center">
+                  <p className="text-red-400 text-sm font-medium">{error}</p>
+                </div>
+              )}
 
               {/* CTA Actions */}
               <div className="pt-4 space-y-6">
