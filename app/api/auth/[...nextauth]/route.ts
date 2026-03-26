@@ -3,21 +3,34 @@ import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
-  // Hardcore reset for Cloudflare Edge
   const origin = "https://2fanvior.pages.dev";
-  process.env.NEXTAUTH_URL = origin;
+  
+  // CRITICAL: NextAuth v4 on Edge fails if req.url is relative.
+  // We must proxy the request and force an absolute URL.
+  const absoluteUrl = req.url.startsWith('http') 
+    ? req.url 
+    : `${origin}${req.url.startsWith('/') ? '' : '/'}${req.url}`;
+  
+  console.log("NextAuth Edge Proxying:", { original: req.url, absolute: absoluteUrl });
+
+  // Clone the request with the absolute URL
+  const modifiedReq = new Request(absoluteUrl, {
+    method: req.method,
+    headers: req.headers,
+    body: req.body,
+    duplex: 'half'
+  } as any);
 
   try {
-    return await NextAuth({
-      ...authOptions,
-      secret: (process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890").trim(),
-    })(req, ctx);
+    // We use the authOptions from lib/auth.ts
+    const response = await NextAuth(authOptions)(modifiedReq, ctx);
+    return response;
   } catch (err: any) {
     console.error("NextAuth Handler Error:", err);
     return NextResponse.json({ 
-      error: "Hardcore Handler Crash", 
+      error: "Edge Proxy Crash", 
       message: err.message,
-      origin 
+      absoluteUrl 
     }, { status: 500 });
   }
 };
