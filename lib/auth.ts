@@ -37,7 +37,7 @@ const jwtEncode = async ({ token }: { token?: any }) => {
   return `${data}.${signatureBase64}`;
 };
 
-const jwtDecode = async ({ token }: { token?: string }) => {
+export const jwtDecode = async ({ token }: { token?: string }) => {
   if (!token) return null;
   const parts = token.split(".");
   if (parts.length !== 3) return null;
