@@ -1,18 +1,20 @@
 import NextAuth from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const handler = async (req: Request, ctx: any) => {
+export async function GET(req: NextRequest, ctx: any) {
   try {
-    return await NextAuth(authOptions)(req, ctx);
+    return await NextAuth(req as any, ctx, authOptions);
   } catch (err: any) {
-    console.error("NextAuth 500 Error:", err);
-    return NextResponse.json({ 
-      error: "Callback 500 Crash", 
-      message: err.message,
-      stack: err.stack 
-    }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
-};
+}
 
-export { handler as GET, handler as POST };
+export async function POST(req: NextRequest, ctx: any) {
+  try {
+    return await NextAuth(req as any, ctx, authOptions);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
