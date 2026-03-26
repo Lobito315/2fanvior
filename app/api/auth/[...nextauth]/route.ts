@@ -83,45 +83,20 @@ export const authOptions: NextAuthOptions = {
 import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
+  // Hardcore reset for Cloudflare Edge
+  const origin = "https://2fanvior.pages.dev";
+  process.env.NEXTAUTH_URL = origin;
+
   try {
-    // Edge-Safe URL Reconstruction with Trimming for accidental spaces in Cloudflare UI
-    const envUrl = process.env.NEXTAUTH_URL?.trim();
-    const rawUrl = req.url || "/api/auth/callback/credentials";
-    let sanitizedUrl = rawUrl;
-    
-    // Always ensure absolute URL for the URL constructor
-    if (!sanitizedUrl.startsWith('http')) {
-      const host = req.headers.get('host') || '2fanvior.pages.dev';
-      const protocol = req.headers.get('x-forwarded-proto') || 'https';
-      sanitizedUrl = `${protocol}://${host}${sanitizedUrl}`;
-    }
-
-    // Double check sanity before constructor
-    if (!sanitizedUrl || sanitizedUrl === "" || sanitizedUrl === "undefined") {
-       sanitizedUrl = envUrl || "https://2fanvior.pages.dev";
-    }
-
-    const origin = new URL(sanitizedUrl).origin;
-    
-    // Reset global env to cleaned version
-    process.env.NEXTAUTH_URL = origin.trim();
-
-    try {
-      return await NextAuth({
-        ...authOptions,
-        secret: (process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890").trim(),
-      })(req, ctx);
-    } catch (innerErr: any) {
-      return NextResponse.json({ 
-        error: "NextAuth Internal Crash", 
-        message: innerErr.message,
-        origin: origin 
-      }, { status: 500 });
-    }
-  } catch (outerErr: any) {
+    return await NextAuth({
+      ...authOptions,
+      secret: (process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890").trim(),
+    })(req, ctx);
+  } catch (err: any) {
     return NextResponse.json({ 
-      error: "Edge Runtime Crash", 
-      message: outerErr.message 
+      error: "Hardcore Handler Crash", 
+      message: err.message,
+      origin 
     }, { status: 500 });
   }
 };
