@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { PayPalUnlockButton } from '@/components/payments/PayPalUnlockButton';
 
 interface PostCardProps {
   creatorName: string;
@@ -15,6 +16,8 @@ interface PostCardProps {
   likes: number;
   comments: number;
   tips: string;
+  postId: string;
+  price: number;
 }
 
 export function PostCard({ 
@@ -29,8 +32,12 @@ export function PostCard({
   isLocked, 
   likes, 
   comments, 
-  tips 
+  tips,
+  postId,
+  price
 }: PostCardProps) {
+  const [isUnlockedLocally, setIsUnlockedLocally] = useState(false);
+  const showLocked = isLocked && !isUnlockedLocally;
   return (
     <article className="bg-surface-container-high rounded-xl overflow-hidden glass-card shadow-xl border border-outline-variant/10">
       {/* Post Header */}
@@ -57,25 +64,27 @@ export function PostCard({
         {description && <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-2 font-bold">{description}</p>}
         {content && <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-6">{content}</p>}
         
-        {mediaUrl && !isLocked && (
+        {mediaUrl && !showLocked && (
           <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-outline-variant/10 mb-6 bg-surface-container-lowest">
             <Image src={mediaUrl} alt="Post content" fill className="object-cover" />
           </div>
         )}
 
-        {isLocked && (
-          <div className="relative w-full aspect-square md:aspect-video rounded-lg overflow-hidden mb-6 flex items-center justify-center border border-primary-container/30 bg-surface-container-low group cursor-pointer">
+        {showLocked && (
+          <div className="relative w-full aspect-square md:aspect-video rounded-lg overflow-hidden mb-6 flex items-center justify-center border border-primary-container/30 bg-surface-container-low group">
             {mediaUrl && (
               <Image src={mediaUrl} alt="Locked content preview" fill className="object-cover opacity-30 blur-md grayscale transition-all group-hover:blur-sm" />
             )}
             <div className="relative z-10 flex flex-col items-center p-8 bg-surface-container-high/80 backdrop-blur-xl rounded-2xl border border-primary/20 shadow-2xl">
               <span className="material-symbols-outlined text-4xl text-primary mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
               <h4 className="font-headline font-bold text-on-surface text-lg mb-2">Premium Artifact</h4>
-              <p className="text-xs text-outline font-label uppercase tracking-widest text-center mb-6">Unlock to reveal curated content</p>
-              <button className="px-6 py-3 brand-gradient rounded-full text-xs font-bold text-on-primary-container shadow-lg shadow-primary-container/20 flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all">
-                <span className="material-symbols-outlined text-sm">key</span>
-                Unlock Access — $5.00
-              </button>
+              <p className="text-xs text-outline font-label uppercase tracking-widest text-center mb-6">Unlock for ${price.toFixed(2)} to reveal curated content</p>
+              
+              <PayPalUnlockButton 
+                postId={postId} 
+                amount={price} 
+                onSuccess={() => setIsUnlockedLocally(true)} 
+              />
             </div>
           </div>
         )}

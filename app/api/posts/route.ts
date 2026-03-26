@@ -7,6 +7,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 // GET: Fetch all visible posts
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
     const posts = await prisma.post.findMany({
       include: { 
         creator: { 
@@ -15,6 +16,28 @@ export async function GET(req: Request) {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // If user is logged in, mark which posts they have access to
+    if (session?.user?.email) {
+      const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+      if (user) {
+        const userPayments = await prisma.payment.findMany({
+          where: { userId: user.id, status: 'COMPLETED' },
+          select: { postId: true }
+        });
+        
+        const unlockedPostIds = new Set(userPayments.map(p => p.postId).filter(Boolean));
+        
+        const processedPosts = posts.map(post => ({
+          ...post,
+          isLocked: post.isLocked && !unlockedPostIds.has(post.id) && post.creatorId !== user.id,
+          hasAccess: !post.isLocked || unlockedPostIds.has(post.id) || post.creatorId === user.id
+        }));
+        
+        return NextResponse.json(processedPosts);
+      }
+    }
+
     return NextResponse.json(posts);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });

@@ -49,6 +49,7 @@ model Post {
   schedulePublish DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  payments        Payment[]
 }
 
 model Subscription {
@@ -66,6 +67,8 @@ model Payment {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  postId    String?
+  post      Post?    @relation(fields: [postId], references: [id])
   amount    Float
   currency  String   @default("USD")
   type      String
