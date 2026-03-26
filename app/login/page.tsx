@@ -19,24 +19,33 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-        callbackUrl: 'https://2fanvior.pages.dev/dashboard'
+      // Manual fetch to bypass NextAuth client-side URL construction bugs
+      const response = await fetch('/api/auth/callback/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          csrfToken: await fetch('/api/auth/csrf').then(res => res.json()).then(data => data.csrfToken),
+          callbackUrl: 'https://2fanvior.pages.dev/dashboard',
+          json: true
+        })
       });
-      console.log('SignIn Response:', res);
-      setLoading(false);
-      
-      if (res?.error) {
-        setError(res.error === 'CredentialsSignin' ? 'Invalid email or password.' : res.error);
-      } else {
-        router.push('/dashboard');
+
+      const data = (await response.json()) as any;
+      console.log('Manual SignIn Response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Login failed');
       }
+
+      // If success, then we can use the SDK to hydrate the session or just redirect
+      window.location.href = '/dashboard';
     } catch (err: any) {
-      console.error('SignIn Exception:', err);
+      console.error('Manual SignIn Exception:', err);
+      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } finally {
       setLoading(false);
-      setError(err?.message || 'An unexpected error occurred. Please try again.');
     }
   };
 
