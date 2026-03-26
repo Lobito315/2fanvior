@@ -24,6 +24,7 @@ export default function LoginPage() {
         email,
         password,
       });
+      console.log('SignIn Response:', res);
       setLoading(false);
       
       if (res?.error) {
