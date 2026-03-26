@@ -24,7 +24,7 @@ export async function GET(req: Request) {
         const userPayments = await prisma.payment.findMany({
           where: { userId: user.id, status: 'COMPLETED' },
           select: { postId: true }
-        });
+        }) as any[];
         
         const unlockedPostIds = new Set(userPayments.map(p => p.postId).filter(Boolean));
         

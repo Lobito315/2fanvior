@@ -83,38 +83,48 @@ export const authOptions: NextAuthOptions = {
 import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
-  try {
-    // Saneamiento robusto: Si la URL de Cloudflare viene sin "https://", NextAuth crasheará al hacer new URL()
-    let verifiedUrl = process.env.NEXTAUTH_URL;
-    if (!verifiedUrl || verifiedUrl === "undefined") {
-      // Fallback to request origin gracefully
-      try {
-        const origin = new URL(req.url).origin;
-        verifiedUrl = origin;
-      } catch (e) {
-        verifiedUrl = "http://localhost:3000"; // Absolute fallback to prevent NextAuth Invalid URL crash
-      }
-    } else if (!verifiedUrl.startsWith("http")) {
-      verifiedUrl = `https://${verifiedUrl}`;
-    }
-    process.env.NEXTAUTH_URL = verifiedUrl;
+  const reqUrl = req.url || "";
+  let nextAuthUrl = process.env.NEXTAUTH_URL;
 
-    const response = await NextAuth({
+  try {
+    // 1. Detect and fix missing NEXTAUTH_URL
+    if (!nextAuthUrl || nextAuthUrl === "undefined" || nextAuthUrl === "") {
+      try {
+        const urlObj = new URL(reqUrl);
+        nextAuthUrl = urlObj.origin;
+      } catch (e) {
+        nextAuthUrl = "https://2fanvior.pages.dev"; // Hardcoded fallback for this specific deployment
+      }
+    }
+
+    // 2. Protocol enforcement
+    if (nextAuthUrl && !nextAuthUrl.startsWith("http")) {
+      nextAuthUrl = `https://${nextAuthUrl}`;
+    }
+
+    // 3. Inject back to env (NextAuth reads from here)
+    process.env.NEXTAUTH_URL = nextAuthUrl;
+
+    const options: NextAuthOptions = {
       ...authOptions,
       secret: process.env.NEXTAUTH_SECRET || "fallback_secret_that_is_at_least_32_characters_long_for_jwt_123",
-      debug: true,
-    })(req, ctx);
+    };
+
+    const response = await NextAuth(options)(req, ctx);
 
     // Si NextAuth devuelve 500 (crash interno), interceptamos la respuesta
     if (response.status === 500) {
-      const text = await response.clone().text().catch(() => "No text body");
+      const cloned = response.clone();
+      const text = await cloned.text().catch(() => "No text body");
       return NextResponse.json({
         error: "NextAuth Internal 500",
-        originalBody: text,
-        secretWasPresent: !!process.env.NEXTAUTH_SECRET,
-        reqMethod: req.method,
-        reqUrl: req.url,
-        nextAuthUrl: process.env.NEXTAUTH_URL || "MISSING"
+        diagnostics: {
+          reqUrl: reqUrl,
+          derivedNextAuthUrl: nextAuthUrl,
+          envNextAuthUrl: process.env.NEXTAUTH_URL,
+          hasSecret: !!process.env.NEXTAUTH_SECRET,
+          rawBody: text.substring(0, 500)
+        }
       }, { status: 500 });
     }
 
@@ -123,10 +133,11 @@ const handler = async (req: Request, ctx: any) => {
     return NextResponse.json({
       error: "NextAuth Exception",
       message: e.message,
-      stack: e.stack?.substring(0, 500),
-      reqMethod: req.method,
-      reqUrl: req.url,
-      nextAuthUrl: process.env.NEXTAUTH_URL || "MISSING"
+      diagnostics: {
+        reqUrl: reqUrl,
+        derivedNextAuthUrl: nextAuthUrl,
+        stack: e.stack?.substring(0, 300)
+      }
     }, { status: 500 });
   }
 };

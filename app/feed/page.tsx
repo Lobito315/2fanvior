@@ -35,7 +35,7 @@ export default function FeedPage() {
       setLoading(true);
       const res = await fetch('/api/posts');
       if (!res.ok) throw new Error('Failed to fetch sequence');
-      const data = await res.json();
+      const data = await res.json() as Post[];
       setPosts(data);
     } catch (err: any) {
       setError(err.message);
