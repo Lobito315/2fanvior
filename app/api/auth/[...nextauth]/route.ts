@@ -84,7 +84,8 @@ import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
   try {
-    // Edge-Safe URL Reconstruction
+    // Edge-Safe URL Reconstruction with Trimming for accidental spaces in Cloudflare UI
+    const envUrl = process.env.NEXTAUTH_URL?.trim();
     const rawUrl = req.url || "/api/auth/callback/credentials";
     let sanitizedUrl = rawUrl;
     
@@ -97,20 +98,19 @@ const handler = async (req: Request, ctx: any) => {
 
     // Double check sanity before constructor
     if (!sanitizedUrl || sanitizedUrl === "" || sanitizedUrl === "undefined") {
-       sanitizedUrl = "https://2fanvior.pages.dev";
+       sanitizedUrl = envUrl || "https://2fanvior.pages.dev";
     }
 
     const origin = new URL(sanitizedUrl).origin;
-    process.env.NEXTAUTH_URL = origin;
+    
+    // Reset global env to cleaned version
+    process.env.NEXTAUTH_URL = origin.trim();
 
-    // Direct NextAuth call with absolute guarantee of NEXTAUTH_URL
     try {
-      const response = await NextAuth({
+      return await NextAuth({
         ...authOptions,
-        secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890",
+        secret: (process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890").trim(),
       })(req, ctx);
-      
-      return response;
     } catch (innerErr: any) {
       return NextResponse.json({ 
         error: "NextAuth Internal Crash", 
