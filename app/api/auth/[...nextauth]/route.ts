@@ -84,39 +84,44 @@ import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
   try {
-    // Cloudflare Edge Fix: Safely derive absolute URL
-    let urlString = req.url;
+    // Edge-Safe URL Reconstruction
+    const rawUrl = req.url || "/api/auth/callback/credentials";
+    let sanitizedUrl = rawUrl;
     
-    // If req.url is relative (common in some Edge contexts), prepend the host header
-    if (urlString.startsWith('/')) {
+    // Always ensure absolute URL for the URL constructor
+    if (!sanitizedUrl.startsWith('http')) {
       const host = req.headers.get('host') || '2fanvior.pages.dev';
       const protocol = req.headers.get('x-forwarded-proto') || 'https';
-      urlString = `${protocol}://${host}${urlString}`;
+      sanitizedUrl = `${protocol}://${host}${sanitizedUrl}`;
     }
 
-    const origin = new URL(urlString).origin;
-    
-    // Set NEXTAUTH_URL for the internal library logic
+    // Double check sanity before constructor
+    if (!sanitizedUrl || sanitizedUrl === "" || sanitizedUrl === "undefined") {
+       sanitizedUrl = "https://2fanvior.pages.dev";
+    }
+
+    const origin = new URL(sanitizedUrl).origin;
     process.env.NEXTAUTH_URL = origin;
 
-    // Use a try-catch specifically for the NextAuth call
+    // Direct NextAuth call with absolute guarantee of NEXTAUTH_URL
     try {
-      return await NextAuth({
+      const response = await NextAuth({
         ...authOptions,
         secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890",
       })(req, ctx);
+      
+      return response;
     } catch (innerErr: any) {
       return NextResponse.json({ 
-        error: "NextAuth Internal Error", 
+        error: "NextAuth Internal Crash", 
         message: innerErr.message,
-        derivedUrl: origin
+        origin: origin 
       }, { status: 500 });
     }
   } catch (outerErr: any) {
     return NextResponse.json({ 
-      error: "Edge Handler Error", 
-      message: outerErr.message,
-      reqUrl: req.url
+      error: "Edge Runtime Crash", 
+      message: outerErr.message 
     }, { status: 500 });
   }
 };

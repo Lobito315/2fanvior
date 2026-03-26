@@ -57,8 +57,9 @@ export default function LoginPage() {
       <main className="relative z-10 w-full max-w-[480px] space-y-8">
         {/* Identity Header */}
         <div className="text-center space-y-4">
-          <h1 className="font-headline text-4xl md:text-5xl font-extrabold text-on-surface tracking-tighter">
+          <h1 className="font-headline text-4xl md:text-5xl font-extrabold text-on-surface tracking-tighter relative inline-block">
             Fanvior
+            <span className="absolute -top-2 -right-12 text-[8px] opacity-20 font-mono">v1.0.5-debug</span>
           </h1>
           <p className="font-body text-outline text-lg tracking-tight">Enter the sanctuary of rare aesthetics.</p>
         </div>
