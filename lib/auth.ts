@@ -76,7 +76,6 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
-  // Ensure we are using secure cookies on production
+  secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_at_least_12345",
   useSecureCookies: process.env.NODE_ENV === "production",
 };
