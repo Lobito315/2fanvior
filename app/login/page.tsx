@@ -59,7 +59,7 @@ export default function LoginPage() {
         <div className="text-center space-y-4">
           <h1 className="font-headline text-4xl md:text-5xl font-extrabold text-on-surface tracking-tighter relative inline-block">
             Fanvior
-            <span className="absolute -top-6 -right-16 text-[10px] text-red-500 font-bold bg-white/10 px-2 rounded">DEPLOY_V_106</span>
+            <span className="absolute -top-6 -right-16 text-[8px] text-fuchsia-400 font-mono bg-white/5 px-2 rounded">B_107_TS_{new Date().toISOString()}</span>
           </h1>
           <p className="font-body text-outline text-lg tracking-tight">Enter the sanctuary of rare aesthetics.</p>
         </div>
