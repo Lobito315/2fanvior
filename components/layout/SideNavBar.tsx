@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 
 
@@ -56,25 +56,43 @@ export function SideNavBar() {
         
         <div className="space-y-1">
           <NavItem icon="support_agent" label="Support" href="/support" isSmall active={pathname === '/support'} />
-          <NavItem icon="logout" label="Logout" href="/api/auth/signout" isSmall />
+          <NavItem 
+            icon="logout" 
+            label="Logout" 
+            isSmall 
+            onClick={() => signOut({ callbackUrl: '/login' })} 
+          />
         </div>
       </div>
     </aside>
   );
 }
 
-function NavItem({ icon, label, href, active, isSmall }: { icon: string, label: string, href: string, active?: boolean, isSmall?: boolean }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex items-center gap-4 transition-all group",
-        isSmall ? "py-2 text-outline pl-5 hover:text-on-surface" : "py-3",
-        active ? "border-l-4 border-primary text-primary pl-4 bg-primary/5" : (!isSmall && "text-outline pl-5 hover:text-on-surface hover:bg-surface-container-high/40")
-      )}
-    >
+function NavItem({ icon, label, href, active, isSmall, onClick }: { icon: string, label: string, href?: string, active?: boolean, isSmall?: boolean, onClick?: () => void }) {
+  const content = (
+    <>
       <span className={cn("material-symbols-outlined", isSmall ? "text-lg" : "")} style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
       <span className={cn(isSmall ? "text-xs uppercase tracking-widest" : "font-headline text-sm font-medium uppercase tracking-widest")}>{label}</span>
+    </>
+  );
+
+  const className = cn(
+    "flex items-center gap-4 transition-all group w-full text-left",
+    isSmall ? "py-2 text-outline pl-5 hover:text-on-surface" : "py-3",
+    active ? "border-l-4 border-primary text-primary pl-4 bg-primary/5" : (!isSmall && "text-outline pl-5 hover:text-on-surface hover:bg-surface-container-high/40")
+  );
+
+  if (onClick) {
+    return (
+      <button onClick={onClick} className={className}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href || "#"} className={className}>
+      {content}
     </Link>
   );
 }
