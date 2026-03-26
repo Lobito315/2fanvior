@@ -83,32 +83,40 @@ export const authOptions: NextAuthOptions = {
 import { NextResponse } from "next/server";
 
 const handler = async (req: Request, ctx: any) => {
-  // Cloudflare Edge Fix: NextAuth v4 requires an absolute NEXTAUTH_URL
-  const origin = new URL(req.url).origin;
-  
-  // Try to use precisely the origin as the NEXTAUTH_URL if env is missing or invalid
-  if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("undefined")) {
-    process.env.NEXTAUTH_URL = origin;
-  }
-
-  // Ensure it has https in production
-  if (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.startsWith('http')) {
-     process.env.NEXTAUTH_URL = `https://${process.env.NEXTAUTH_URL}`;
-  }
-
   try {
-    const res = await NextAuth({
-      ...authOptions,
-      secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890",
-    })(req, ctx);
+    // Cloudflare Edge Fix: Safely derive absolute URL
+    let urlString = req.url;
     
-    return res;
-  } catch (err: any) {
-    console.error("NextAuth Edge Error:", err);
+    // If req.url is relative (common in some Edge contexts), prepend the host header
+    if (urlString.startsWith('/')) {
+      const host = req.headers.get('host') || '2fanvior.pages.dev';
+      const protocol = req.headers.get('x-forwarded-proto') || 'https';
+      urlString = `${protocol}://${host}${urlString}`;
+    }
+
+    const origin = new URL(urlString).origin;
+    
+    // Set NEXTAUTH_URL for the internal library logic
+    process.env.NEXTAUTH_URL = origin;
+
+    // Use a try-catch specifically for the NextAuth call
+    try {
+      return await NextAuth({
+        ...authOptions,
+        secret: process.env.NEXTAUTH_SECRET || "fallback_secret_32_chars_long_1234567890",
+      })(req, ctx);
+    } catch (innerErr: any) {
+      return NextResponse.json({ 
+        error: "NextAuth Internal Error", 
+        message: innerErr.message,
+        derivedUrl: origin
+      }, { status: 500 });
+    }
+  } catch (outerErr: any) {
     return NextResponse.json({ 
-      error: "Authentication Failure", 
-      message: err.message,
-      url: process.env.NEXTAUTH_URL 
+      error: "Edge Handler Error", 
+      message: outerErr.message,
+      reqUrl: req.url
     }, { status: 500 });
   }
 };
