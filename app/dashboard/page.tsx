@@ -5,8 +5,16 @@ import { TopNavBar } from '@/components/layout/TopNavBar';
 import { SideNavBar } from '@/components/layout/SideNavBar';
 import { StatCard } from '@/components/cards/StatCard';
 import { UserCard } from '@/components/cards/UserCard';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const user = session?.user as any;
+  const isAdmin = user?.role === 'ADMIN';
+  const isCreator = user?.role === 'CREATOR';
+
   return (
     <div className="bg-surface text-on-surface min-h-screen">
       <SideNavBar />
@@ -17,17 +25,30 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-outline mb-2">
-              <a href="#" className="hover:text-primary">Admin</a>
+              <a href="#" className="hover:text-primary">{isAdmin ? "Admin" : isCreator ? "Creator" : "Subscriber"}</a>
               <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-              <span className="text-primary font-bold">User Management</span>
+              <span className="text-primary font-bold">{isAdmin ? "User Management" : isCreator ? "Creator Studio" : "My Feed"}</span>
             </nav>
-            <h2 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface">Community <span className="text-primary">Curators</span></h2>
-            <p className="text-outline mt-2 max-w-lg">Oversee, moderate, and empower your creator ecosystem from one unified control center.</p>
+            <h2 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface">
+              {isAdmin ? "Community " : isCreator ? "Creator " : "My "}
+              <span className="text-primary">{isAdmin ? "Curators" : isCreator ? "Station" : "Feed"}</span>
+            </h2>
+            <p className="text-outline mt-2 max-w-lg">
+              {isAdmin 
+                ? "Oversee, moderate, and empower your creator ecosystem from one unified control center." 
+                : isCreator 
+                ? "Manage your content, track your earnings, and engage with your subscribers." 
+                : "Explore the latest exclusive content from your favorite creators."
+              }
+            </p>
           </div>
           
-          <button className="flex items-center gap-2 bg-gradient-to-br from-primary-container to-on-primary-fixed-variant text-on-primary-container px-6 py-3 rounded-full font-bold shadow-lg shadow-primary-container/20 hover:scale-[1.02] active:scale-95 transition-all">
-            <span className="material-symbols-outlined">person_add</span>
-            <span>Add New User</span>
+          <button 
+            onClick={() => router.push(isAdmin ? '/users' : isCreator ? '/content/create' : '/feed')}
+            className="flex items-center gap-2 bg-gradient-to-br from-primary-container to-on-primary-fixed-variant text-on-primary-container px-6 py-3 rounded-full font-bold shadow-lg shadow-primary-container/20 hover:scale-[1.02] active:scale-95 transition-all"
+          >
+            <span className="material-symbols-outlined">{isAdmin ? 'person_add' : isCreator ? 'add_box' : 'dynamic_feed'}</span>
+            <span>{isAdmin ? 'Add New User' : isCreator ? 'Create New Post' : 'Explore Feed'}</span>
           </button>
         </div>
 
