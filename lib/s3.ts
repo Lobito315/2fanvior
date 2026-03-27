@@ -15,9 +15,23 @@ const ENDPOINT = process.env.R2_ENDPOINT || '';
  * Creates a presigned URL that allows a client to upload a file directly to R2.
  */
 export async function generatePresignedUrl(fileName: string, contentType: string) {
+  if (!ENDPOINT) {
+    throw new Error('R2_ENDPOINT is not configured in Environment Variables');
+  }
+  if (!BUCKET_NAME) {
+    throw new Error('R2_BUCKET_NAME is not configured in Environment Variables');
+  }
+
   // Construct the target URL correctly for Cloudflare R2
   // Usually the endpoint has no trailing slash, so we append /bucket-name/fileName
-  const url = new URL(`${ENDPOINT}/${BUCKET_NAME}/${fileName}`);
+  const urlString = `${ENDPOINT.replace(/\/$/, '')}/${BUCKET_NAME}/${fileName}`;
+  
+  let url;
+  try {
+    url = new URL(urlString);
+  } catch (error) {
+    throw new Error(`Invalid R2_ENDPOINT format. Expected an HTTP/HTTPS URL, got: ${ENDPOINT}`);
+  }
 
   // Sign the request to create a presigned query URL (signQuery: true)
   const signedRequest = await s3Client.sign(url.toString(), {
