@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { TopNavBar } from '@/components/layout/TopNavBar';
 import { SideNavBar } from '@/components/layout/SideNavBar';
@@ -20,8 +20,12 @@ const postSchema = z.object({
 
 export default function CreateContentPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -32,23 +36,84 @@ export default function CreateContentPage() {
     price: 0,
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setMediaFile(file);
+      // Auto-detect type
+      if (file.type.startsWith('image/')) setFormData(prev => ({ ...prev, mediaType: 'image' }));
+      else if (file.type.startsWith('video/')) setFormData(prev => ({ ...prev, mediaType: 'video' }));
+      else if (file.type.startsWith('audio/')) setFormData(prev => ({ ...prev, mediaType: 'audio' }));
+    }
+  };
+
+  const uploadFileToR2 = async (file: File): Promise<string> => {
+    // 1. Get presigned URL
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json() as { error?: string };
+      throw new Error(errData.error || 'Failed to get upload URL');
+    }
+
+    const { uploadUrl, publicUrl } = await res.json() as { uploadUrl: string; publicUrl: string };
+
+    // 2. Upload file directly to R2
+    // We use XMLHttpRequest to track progress
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type);
+      
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          setUploadProgress(Math.round(percentComplete));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          resolve(publicUrl);
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    const validation = postSchema.safeParse(formData);
-    if (!validation.success) {
-      setError(validation.error.issues[0].message);
-      setLoading(false);
-      return;
-    }
+    setUploadProgress(0);
 
     try {
+      let finalMediaUrl = formData.mediaUrl;
+
+      // If user selected a file, upload it first
+      if (mediaFile) {
+        finalMediaUrl = await uploadFileToR2(mediaFile);
+      }
+
+      const payload = { ...formData, mediaUrl: finalMediaUrl };
+      const validation = postSchema.safeParse(payload);
+      
+      if (!validation.success) {
+        throw new Error(validation.error.issues[0].message);
+      }
+
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -59,7 +124,6 @@ export default function CreateContentPage() {
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -98,27 +162,47 @@ export default function CreateContentPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="font-label text-xs font-bold uppercase tracking-widest text-outline ml-1">Media URL</label>
-                  <Input
-                    placeholder="https://imgur.com/..."
-                    value={formData.mediaUrl}
-                    onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
+              {/* Media Upload Area */}
+              <div className="space-y-2">
+                <label className="font-label text-xs font-bold uppercase tracking-widest text-outline ml-1">Media File</label>
+                
+                <div 
+                  className={`w-full border-2 border-dashed rounded-xl p-8 text-center transition-all ${mediaFile ? 'border-primary bg-primary/5' : 'border-outline/20 bg-surface-container-lowest hover:border-primary/50'}`}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*,video/*,audio/*"
+                    onChange={handleFileChange}
                   />
+                  
+                  {mediaFile ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-4xl text-primary">check_circle</span>
+                      <p className="font-bold text-on-surface">{mediaFile.name}</p>
+                      <p className="text-xs text-outline">{(mediaFile.size / 1024 / 1024).toFixed(2)} MB • Click to change</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 cursor-pointer">
+                      <span className="material-symbols-outlined text-4xl text-outline mb-2">cloud_upload</span>
+                      <p className="font-bold text-on-surface">Click to upload or drag and drop</p>
+                      <p className="text-xs text-outline">Images, Videos, or Audio (Processed via Edge R2)</p>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <label className="font-label text-xs font-bold uppercase tracking-widest text-outline ml-1">Type</label>
-                  <select
-                    className="w-full h-14 bg-surface-container-lowest text-on-surface border border-outline/20 rounded-xl px-4 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                    value={formData.mediaType}
-                    onChange={(e) => setFormData({ ...formData, mediaType: e.target.value as any })}
-                  >
-                    <option value="image">Image</option>
-                    <option value="video">Video</option>
-                    <option value="audio">Audio</option>
-                  </select>
-                </div>
+
+                {!mediaFile && (
+                  <div className="mt-4 space-y-2">
+                    <p className="font-label text-xs uppercase tracking-widest text-outline text-center mt-4 mb-2">OR USE EXISTING URL</p>
+                    <Input
+                      placeholder="https://imgur.com/..."
+                      value={formData.mediaUrl}
+                      onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-6 pt-4 border-t border-outline/10">
@@ -153,8 +237,20 @@ export default function CreateContentPage() {
               </div>
             )}
 
+            {uploadProgress > 0 && uploadProgress < 100 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-bold text-outline uppercase tracking-widest">
+                  <span>Uploading to R2...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-surface-container-highest rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                </div>
+              </div>
+            )}
+
             <Button type="submit" variant="gradient" fullWidth className="h-14 text-lg" disabled={loading}>
-              {loading ? "Publishing..." : "Publish to Feed"}
+              {loading ? "Processing..." : "Publish to Feed"}
               {!loading && <span className="material-symbols-outlined ml-2">send</span>}
             </Button>
           </form>
