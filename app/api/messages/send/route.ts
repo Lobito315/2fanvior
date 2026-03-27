@@ -1,5 +1,7 @@
+export const runtime = 'edge';
+
 import { NextResponse } from 'next/server';
-import { pusherServer } from '@/lib/pusher';
+import { pusherTrigger } from '@/lib/pusher';
 import { z } from "zod";
 
 const messageSchema = z.object({
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
     const { chatId, message, senderId } = result.data;
 
     // Trigger Pusher event
-    await pusherServer.trigger(chatId, 'receive_message', {
+    await pusherTrigger(chatId, 'receive_message', {
       message,
       senderId,
       timestamp: new Date().toISOString(),
