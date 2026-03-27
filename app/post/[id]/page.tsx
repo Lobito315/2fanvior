@@ -4,8 +4,8 @@ import { SideNavBar } from '@/components/layout/SideNavBar';
 import { PostCard } from '@/components/cards/PostCard';
 import Link from 'next/link';
 
-export default function PostDetailsPage({ params }: { params: { id: string } }) {
-  const postId = params.id;
+export default async function PostDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: postId } = await params;
   
   // Mock data for the post matching the Feed page aesthetic
   const mockPost = {
