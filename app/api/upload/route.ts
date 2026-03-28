@@ -5,6 +5,8 @@ import { generatePresignedUrl } from '@/lib/s3';
 // OpenNext Cloudflare specific context
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
+export const runtime = 'edge';
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,13 +22,14 @@ export async function POST(req: Request) {
     }
 
     // Attempt to get environment variables from Cloudflare context, fallback to process.env for local dev
-    let envVars: Record<string, string | undefined> = {};
+    let envVars: Record<string, string | undefined> = { ...process.env };
     try {
       const { env } = getCloudflareContext();
-      envVars = env as Record<string, string | undefined>;
+      if (env) {
+        envVars = { ...envVars, ...env } as Record<string, string | undefined>;
+      }
     } catch (e) {
-      // In local dev, getCloudflareContext might fail if not using the wrapper, use process.env
-      envVars = process.env;
+      // Ignore if not in Cloudflare context
     }
 
     // Add a unique prefix to prevent overwriting
