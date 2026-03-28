@@ -1,26 +1,24 @@
 import { AwsClient } from 'aws4fetch';
 
-// Helper to access process.env dynamically and prevent Webpack 
-// from statically replacing these with `undefined` during `next build`.
-const getEnv = (key: string) => process.env[key] || '';
-
 /**
  * Creates a presigned URL that allows a client to upload a file directly to R2.
  */
-export async function generatePresignedUrl(fileName: string, contentType: string) {
-  // Read variables inside the function to ensure they are evaluated dynamically 
-  // at runtime under Cloudflare Edge, not statically at module load time.
-  const r2AccessKeyId = getEnv('R2_ACCESS_KEY_ID');
-  const r2SecretAccessKey = getEnv('R2_SECRET_ACCESS_KEY');
-  const bucketName = getEnv('R2_BUCKET_NAME');
-  const publicUrlBase = getEnv('R2_PUBLIC_URL');
-  const endpoint = getEnv('R2_ENDPOINT');
+export async function generatePresignedUrl(
+  fileName: string, 
+  contentType: string, 
+  envVariables: Record<string, string | undefined>
+) {
+  const r2AccessKeyId = envVariables.R2_ACCESS_KEY_ID || '';
+  const r2SecretAccessKey = envVariables.R2_SECRET_ACCESS_KEY || '';
+  const bucketName = envVariables.R2_BUCKET_NAME || '';
+  const publicUrlBase = envVariables.R2_PUBLIC_URL || '';
+  const endpoint = envVariables.R2_ENDPOINT || '';
 
   if (!endpoint) {
-    throw new Error('R2_ENDPOINT is not configured in Environment Variables');
+    throw new Error('R2_ENDPOINT is not configured (received empty)');
   }
   if (!bucketName) {
-    throw new Error(`R2_BUCKET_NAME is not configured in Environment Variables`);
+    throw new Error(`R2_BUCKET_NAME is not configured (received empty)`);
   }
 
   const s3Client = new AwsClient({
