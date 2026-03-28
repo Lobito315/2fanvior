@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { generatePresignedUrl } from '@/lib/s3';
-// OpenNext Cloudflare specific context
-import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-export const runtime = 'edge';
+// Helper to reliably retrieve env vars avoiding Next.js static substitution during build
+function getEnvSafe(key: string): string {
+  // Using dynamic property access so Webpack doesn't inline undefined at build time
+  return (process.env[key] as string) || '';
+}
 
 export async function POST(req: Request) {
   try {
@@ -21,16 +23,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing fileName or contentType' }, { status: 400 });
     }
 
-    // Attempt to get environment variables from Cloudflare context, fallback to process.env for local dev
-    let envVars: Record<string, string | undefined> = { ...process.env };
-    try {
-      const { env } = getCloudflareContext();
-      if (env) {
-        envVars = { ...envVars, ...env } as Record<string, string | undefined>;
-      }
-    } catch (e) {
-      // Ignore if not in Cloudflare context
-    }
+    // Collect variables natively bypassing the faulty getCloudflareContext which might be empty
+    const envVars = {
+      R2_ACCESS_KEY_ID: getEnvSafe('R2_ACCESS_KEY_ID'),
+      R2_SECRET_ACCESS_KEY: getEnvSafe('R2_SECRET_ACCESS_KEY'),
+      R2_BUCKET_NAME: getEnvSafe('R2_BUCKET_NAME'),
+      R2_PUBLIC_URL: getEnvSafe('R2_PUBLIC_URL'),
+      R2_ENDPOINT: getEnvSafe('R2_ENDPOINT'),
+    };
 
     // Add a unique prefix to prevent overwriting
     const uniqueFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.\-]/g, "")}`;
