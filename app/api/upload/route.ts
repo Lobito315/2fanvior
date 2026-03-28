@@ -2,10 +2,19 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { generatePresignedUrl } from '@/lib/s3';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-// Helper to reliably retrieve env vars avoiding Next.js static substitution during build
-function getEnvSafe(key: string): string {
-  // Using dynamic property access so Webpack doesn't inline undefined at build time
+export const dynamic = 'force-dynamic';
+
+function getEnvFallback(key: string): string {
+  try {
+    const { env } = getCloudflareContext() as any;
+    if (env && env[key]) {
+      return env[key] as string;
+    }
+  } catch (e) {
+    // getCloudflareContext might throw in local dev or specific runtimes
+  }
   return (process.env[key] as string) || '';
 }
 
@@ -23,13 +32,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing fileName or contentType' }, { status: 400 });
     }
 
-    // Collect variables natively bypassing the faulty getCloudflareContext which might be empty
+    // Explicitly read each variable to avoid Proxy spread issues {...env}
     const envVars = {
-      R2_ACCESS_KEY_ID: getEnvSafe('R2_ACCESS_KEY_ID'),
-      R2_SECRET_ACCESS_KEY: getEnvSafe('R2_SECRET_ACCESS_KEY'),
-      R2_BUCKET_NAME: getEnvSafe('R2_BUCKET_NAME'),
-      R2_PUBLIC_URL: getEnvSafe('R2_PUBLIC_URL'),
-      R2_ENDPOINT: getEnvSafe('R2_ENDPOINT'),
+      R2_ACCESS_KEY_ID: getEnvFallback('R2_ACCESS_KEY_ID'),
+      R2_SECRET_ACCESS_KEY: getEnvFallback('R2_SECRET_ACCESS_KEY'),
+      R2_BUCKET_NAME: getEnvFallback('R2_BUCKET_NAME'),
+      R2_PUBLIC_URL: getEnvFallback('R2_PUBLIC_URL'),
+      R2_ENDPOINT: getEnvFallback('R2_ENDPOINT'),
     };
 
     // Add a unique prefix to prevent overwriting
