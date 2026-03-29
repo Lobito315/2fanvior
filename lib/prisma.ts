@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client/edge';
+import { PrismaClient } from '@prisma/client';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
