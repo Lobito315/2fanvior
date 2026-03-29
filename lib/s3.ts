@@ -1,5 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { AwsClient } from 'aws4fetch';
 
 /**
  * Creates a presigned URL that allows a client to upload a file directly to R2.
@@ -22,24 +21,35 @@ export async function generatePresignedUrl(
     throw new Error(`R2_BUCKET_NAME is not configured (received empty)`);
   }
 
-  // Use official AWS SDK to handle robust S3/R2 presigning without hash mismatches
-  const s3Client = new S3Client({
+  const s3Client = new AwsClient({
+    accessKeyId: r2AccessKeyId,
+    secretAccessKey: r2SecretAccessKey,
+    service: 's3',
     region: 'auto',
-    endpoint: endpoint.replace(/\/$/, ''),
-    credentials: {
-      accessKeyId: r2AccessKeyId,
-      secretAccessKey: r2SecretAccessKey,
+  });
+
+  // Construct the target URL correctly for Cloudflare R2
+  const urlString = `${endpoint.replace(/\/$/, '')}/${bucketName}/${fileName}`;
+  
+  let url;
+  try {
+    url = new URL(urlString);
+  } catch (error) {
+    throw new Error(`Invalid R2_ENDPOINT format. Expected an HTTP/HTTPS URL, got: ${endpoint}`);
+  }
+
+  // Sign the request to create a presigned query URL (signQuery: true)
+  // Enforce UNSIGNED-PAYLOAD to bypass S3 body hashing, which generates 403 Forbidden on uploads
+  const signedRequest = await s3Client.sign(url.toString(), {
+    method: 'PUT',
+    headers: {
+      'Content-Type': contentType,
+      'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD'
     },
+    aws: { signQuery: true }
   });
 
-  const command = new PutObjectCommand({
-    Bucket: bucketName,
-    Key: fileName,
-    ContentType: contentType,
-  });
-
-  // Generate URL valid for 1 hour, safely bypassing explicit payload hash enforcing
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  const uploadUrl = signedRequest.url;
   const publicUrl = `${publicUrlBase.replace(/\/$/, '')}/${fileName}`;
 
   return { uploadUrl, publicUrl };
