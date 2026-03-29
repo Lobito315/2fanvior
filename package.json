@@ -4,19 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:cloudflare": "npx prisma generate && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && node scripts/post-build.mjs",
-    "deploy": "wrangler pages deploy .open-next",
-    "preview": "opennextjs-cloudflare preview",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1019.0",
     "@aws-sdk/s3-request-presigner": "^3.1019.0",
-    "@opennextjs/cloudflare": "1.17.1",
+    "@libsql/client": "^0.17.2",
     "@paypal/react-paypal-js": "^9.0.2",
-    "@prisma/adapter-d1": "^7.5.0",
+    "@prisma/adapter-libsql": "^7.6.0",
     "@prisma/client": "^7.5.0",
     "aws4fetch": "^1.0.20",
     "clsx": "^2.1.1",
@@ -39,7 +36,6 @@
     "postcss": "^8.5.8",
     "prisma": "^7.5.0",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5",
-    "wrangler": "^4.76.0"
+    "typescript": "^5"
   }
 }

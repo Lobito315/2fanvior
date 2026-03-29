@@ -1,21 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { AwsClient } from 'aws4fetch';
 
 export const dynamic = 'force-dynamic';
-
-function getEnvFallback(key: string): string {
-  try {
-    const { env } = getCloudflareContext() as any;
-    if (env && env[key]) {
-      return env[key] as string;
-    }
-  } catch (e) {
-  }
-  return (process.env[key] as string) || '';
-}
 
 export async function POST(req: Request) {
   try {
@@ -31,11 +19,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing file payload' }, { status: 400 });
     }
 
-    const r2AccessKeyId = getEnvFallback('R2_ACCESS_KEY_ID');
-    const r2SecretAccessKey = getEnvFallback('R2_SECRET_ACCESS_KEY');
-    const bucketName = getEnvFallback('R2_BUCKET_NAME');
-    const publicUrlBase = getEnvFallback('R2_PUBLIC_URL');
-    const endpoint = getEnvFallback('R2_ENDPOINT');
+    const r2AccessKeyId = process.env.R2_ACCESS_KEY_ID || '';
+    const r2SecretAccessKey = process.env.R2_SECRET_ACCESS_KEY || '';
+    const bucketName = process.env.R2_BUCKET_NAME || '';
+    const publicUrlBase = process.env.R2_PUBLIC_URL || '';
+    const endpoint = process.env.R2_ENDPOINT || '';
 
     if (!endpoint || !bucketName) {
       return NextResponse.json({ error: 'R2 Server Configuration Missing' }, { status: 500 });
