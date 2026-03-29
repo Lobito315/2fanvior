@@ -23,7 +23,12 @@ export async function POST(req: Request) {
     const r2SecretAccessKey = process.env.R2_SECRET_ACCESS_KEY || '';
     const bucketName = process.env.R2_BUCKET_NAME || '';
     const publicUrlBase = process.env.R2_PUBLIC_URL || '';
-    const endpoint = process.env.R2_ENDPOINT || '';
+    let endpoint = process.env.R2_ENDPOINT || '';
+    
+    // Normalización robusta para prevenir fallos de fetch por falta de protocolo
+    if (endpoint && !endpoint.startsWith('http')) {
+      endpoint = `https://${endpoint}`;
+    }
 
     if (!endpoint || !bucketName) {
       return NextResponse.json({ error: 'R2 Server Configuration Missing' }, { status: 500 });
@@ -38,10 +43,9 @@ export async function POST(req: Request) {
 
     const uniqueFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-]/g, "")}`;
     
-    // Normalize the endpoint. Cloudflare UI provides bucket-specific endpoints, 
-    // so we must prevent duplicating the bucket name in the path.
+    // Normalize the endpoint to avoid duplication of bucket name
     let baseEndpoint = endpoint.replace(/\/$/, '');
-    if (!baseEndpoint.endsWith(bucketName)) {
+    if (bucketName && !baseEndpoint.endsWith(bucketName)) {
       baseEndpoint += `/${bucketName}`;
     }
     const urlString = `${baseEndpoint}/uploads/${uniqueFileName}`;
