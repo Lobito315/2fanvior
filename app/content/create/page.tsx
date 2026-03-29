@@ -48,28 +48,13 @@ export default function CreateContentPage() {
   };
 
   const uploadFileToR2 = async (file: File): Promise<string> => {
-    // 1. Get presigned URL
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileName: file.name, contentType: file.type }),
-    });
-
-    if (!res.ok) {
-      const errData = await res.json() as { error?: string };
-      throw new Error(errData.error || 'Failed to get upload URL');
-    }
-
-    const { uploadUrl, publicUrl } = await res.json() as { uploadUrl: string; publicUrl: string };
-
-    // 2. Upload file directly to R2
-    // We use XMLHttpRequest to track progress
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open('PUT', uploadUrl, true);
-      xhr.setRequestHeader('Content-Type', file.type);
-      xhr.setRequestHeader('x-amz-content-sha256', 'UNSIGNED-PAYLOAD');
+      xhr.open('POST', '/api/upload', true);
       
+      const formData = new FormData();
+      formData.append('file', file);
+
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
           const percentComplete = (e.loaded / e.total) * 100;
@@ -79,14 +64,25 @@ export default function CreateContentPage() {
 
       xhr.onload = () => {
         if (xhr.status === 200) {
-          resolve(publicUrl);
+          try {
+            const { publicUrl, error } = JSON.parse(xhr.responseText);
+            if (error) reject(new Error(error));
+            else resolve(publicUrl);
+          } catch (e) {
+            reject(new Error('Invalid JSON response from server'));
+          }
         } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
+          try {
+            const errBody = JSON.parse(xhr.responseText);
+            reject(new Error(errBody.error || `Upload failed with status ${xhr.status}`));
+          } catch {
+            reject(new Error(`Server error: ${xhr.status}`));
+          }
         }
       };
 
-      xhr.onerror = () => reject(new Error('Network error during upload'));
-      xhr.send(file);
+      xhr.onerror = () => reject(new Error('Network error connecting to the server'));
+      xhr.send(formData);
     });
   };
 
