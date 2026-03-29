@@ -49,7 +49,14 @@ export async function POST(req: Request) {
     });
 
     const uniqueFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-]/g, "")}`;
-    const urlString = `${endpoint.replace(/\/$/, '')}/${bucketName}/uploads/${uniqueFileName}`;
+    
+    // Normalize the endpoint. Cloudflare UI provides bucket-specific endpoints, 
+    // so we must prevent duplicating the bucket name in the path.
+    let baseEndpoint = endpoint.replace(/\/$/, '');
+    if (!baseEndpoint.endsWith(bucketName)) {
+      baseEndpoint += `/${bucketName}`;
+    }
+    const urlString = `${baseEndpoint}/uploads/${uniqueFileName}`;
     
     // Direct Server-to-Server upload bypassing browser CORS policies
     const fileBuffer = await file.arrayBuffer();
