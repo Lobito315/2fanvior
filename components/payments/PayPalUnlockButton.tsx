@@ -22,7 +22,7 @@ export function PayPalUnlockButton({ postId, amount, onSuccess }: PayPalUnlockBu
         style={{ layout: "horizontal", height: 48, label: "pay", shape: "pill" }}
         createOrder={async () => {
           try {
-            const response = await fetch("/api/payments/create-order", {
+            const response = await fetch("/api/payments?action=create-order", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ postId }),
@@ -36,7 +36,7 @@ export function PayPalUnlockButton({ postId, amount, onSuccess }: PayPalUnlockBu
         }}
         onApprove={async (data) => {
           try {
-            const response = await fetch("/api/payments/capture-order", {
+            const response = await fetch("/api/payments?action=capture-order", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 

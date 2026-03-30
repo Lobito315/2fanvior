@@ -100,7 +100,7 @@ function TipModal({ postId, onClose }: { postId: string; onClose: () => void }) 
                   style={{ layout: "horizontal", height: 48, label: "pay", shape: "pill" }}
                   createOrder={async () => {
                     try {
-                      const res = await fetch('/api/payments/create-order', {
+                      const res = await fetch('/api/payments?action=create-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ postId, amount: finalAmount, type: 'TIP' }),
@@ -111,7 +111,7 @@ function TipModal({ postId, onClose }: { postId: string; onClose: () => void }) 
                   }}
                   onApprove={async (data) => {
                     try {
-                      const res = await fetch('/api/payments/capture-order', {
+                      const res = await fetch('/api/payments?action=capture-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orderId: data.orderID, postId, amount: finalAmount?.toString(), type: 'TIP' }),
