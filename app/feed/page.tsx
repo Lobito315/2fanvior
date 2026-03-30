@@ -13,6 +13,7 @@ interface Post {
   description: string | null;
   content: string | null;
   mediaUrl: string | null;
+  mediaType: string | null;
   isLocked: boolean;
   price: number;
   createdAt: string;
@@ -119,6 +120,7 @@ export default function FeedPage() {
                 description={post.description || undefined}
                 content={post.content || undefined}
                 mediaUrl={post.mediaUrl || undefined}
+                mediaType={post.mediaType || undefined}
                 isLocked={post.isLocked}
                 price={post.price}
                 likes={0}

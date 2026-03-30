@@ -67,15 +67,41 @@ export function PostCard({
         {content && <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-6">{content}</p>}
         
         {mediaUrl && !showLocked && (
-          <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-outline-variant/10 mb-6 bg-surface-container-lowest">
-            <Image src={mediaUrl} alt="Post content" fill className="object-cover" />
+          <div className="relative w-full rounded-lg overflow-hidden border border-outline-variant/10 mb-6 bg-black flex items-center justify-center min-h-[200px]">
+            {mediaType === 'video' ? (
+              <video 
+                src={mediaUrl} 
+                className="w-full max-h-[700px] aspect-auto" 
+                controls 
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <div className="relative w-full aspect-video">
+                <Image 
+                  src={mediaUrl} 
+                  alt="Post content" 
+                  fill 
+                  className="object-contain" 
+                  sizes="(max-width: 768px) 100vw, 800px"
+                />
+              </div>
+            )}
           </div>
         )}
 
         {showLocked && (
           <div className="relative w-full aspect-square md:aspect-video rounded-lg overflow-hidden mb-6 flex items-center justify-center border border-primary-container/30 bg-surface-container-low group">
             {mediaUrl && (
-              <Image src={mediaUrl} alt="Locked content preview" fill className="object-cover opacity-30 blur-md grayscale transition-all group-hover:blur-sm" />
+              <div className="absolute inset-0">
+                {mediaType === 'video' ? (
+                  <div className="w-full h-full bg-surface-container-highest flex items-center justify-center opacity-40 blur-md">
+                     <span className="material-symbols-outlined text-6xl">videocam</span>
+                  </div>
+                ) : (
+                  <Image src={mediaUrl} alt="Locked content preview" fill className="object-cover opacity-30 blur-md grayscale transition-all group-hover:blur-sm" />
+                )}
+              </div>
             )}
             <div className="relative z-10 flex flex-col items-center p-8 bg-surface-container-high/80 backdrop-blur-xl rounded-2xl border border-primary/20 shadow-2xl">
               <span className="material-symbols-outlined text-4xl text-primary mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
