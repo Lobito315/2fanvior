@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
+        'Content-Length': file.size.toString(),
       },
       body: fileBuffer,
     });
