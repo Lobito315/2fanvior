@@ -18,6 +18,9 @@ interface Post {
   price: number;
   createdAt: string;
   creatorId: string;
+  likes: number;
+  comments: number;
+  hasLiked: boolean;
   creator: {
     name: string;
     handle: string;
@@ -123,8 +126,9 @@ export default function FeedPage() {
                 mediaType={post.mediaType || undefined}
                 isLocked={post.isLocked}
                 price={post.price}
-                likes={0}
-                comments={0}
+                likes={post.likes || 0}
+                hasLiked={post.hasLiked || false}
+                comments={post.comments || 0}
                 tips="$0"
               />
             ))}

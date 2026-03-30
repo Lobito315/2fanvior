@@ -12,7 +12,10 @@ export async function GET(req: Request) {
       include: { 
         creator: { 
           select: { name: true, handle: true, avatar: true } 
-        } 
+        },
+        _count: {
+          select: { likes: true, comments: true }
+        }
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -27,9 +30,18 @@ export async function GET(req: Request) {
         }) as any[];
         
         const unlockedPostIds = new Set(userPayments.map(p => p.postId).filter(Boolean));
+
+        const userLikes = await prisma.like.findMany({
+          where: { userId: user.id },
+          select: { postId: true }
+        }) as any[];
+        const likedPostIds = new Set(userLikes.map(l => l.postId).filter(Boolean));
         
         const processedPosts = posts.map(post => ({
           ...post,
+          likes: post._count?.likes || 0,
+          comments: post._count?.comments || 0,
+          hasLiked: likedPostIds.has(post.id),
           isLocked: post.isLocked && !unlockedPostIds.has(post.id) && post.creatorId !== user.id,
           hasAccess: !post.isLocked || unlockedPostIds.has(post.id) || post.creatorId === user.id
         }));

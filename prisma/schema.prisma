@@ -30,6 +30,8 @@ model User {
   
   payments          Payment[]
   notifications     Notification[]
+  likes             Like[]
+  comments          Comment[]
 }
 
 model Post {
@@ -48,6 +50,8 @@ model Post {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   payments        Payment[]
+  likes           Like[]
+  comments        Comment[]
 }
 
 model Subscription {
@@ -92,3 +96,26 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  content   String
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
