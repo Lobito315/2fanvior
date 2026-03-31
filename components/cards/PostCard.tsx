@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { PayPalUnlockButton } from '@/components/payments/PayPalUnlockButton';
+import { useSession } from 'next-auth/react';
+import { Modal } from '@/components/ui/Modal';
 
 interface Comment {
   id: string;
@@ -28,6 +30,9 @@ interface PostCardProps {
   tips: string;
   postId: string;
   price: number;
+  creatorId: string;
+  onDelete?: (postId: string) => void;
+  hasAccess?: boolean;
 }
 
 // --- Tip Modal ---
@@ -244,8 +249,12 @@ export function PostCard({
   comments: initialComments,
   tips,
   postId,
-  price
+  price,
+  creatorId,
+  onDelete,
+  hasAccess = false
 }: PostCardProps) {
+  const { data: session } = useSession();
   const [isUnlockedLocally, setIsUnlockedLocally] = useState(false);
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [hasLiked, setHasLiked] = useState(initialHasLiked);
@@ -253,7 +262,24 @@ export function PostCard({
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(initialComments);
   const [showTipModal, setShowTipModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const showLocked = isLocked && !isUnlockedLocally;
+  const canEdit = session?.user && ((session.user as any).id === creatorId || (session.user as any).role === 'ADMIN');
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLike = async () => {
     if (likePending) return;
@@ -282,6 +308,48 @@ export function PostCard({
     }
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+      if (res.ok) {
+        onDelete?.(postId);
+      } else {
+        alert('Failed to delete post');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting post');
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!mediaUrl) return;
+    try {
+      const response = await fetch(mediaUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Extract filename from URL or use a default
+      const filename = mediaUrl.split('/').pop()?.split('?')[0] || `fanvior-artifact-${postId}`;
+      link.setAttribute('download', filename);
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      // Fallback: just open in new tab if blob fetch fails (e.g., CORS)
+      window.open(mediaUrl, '_blank');
+    }
+  };
+
   return (
     <>
       {showTipModal && <TipModal postId={postId} onClose={() => setShowTipModal(false)} />}
@@ -301,10 +369,90 @@ export function PostCard({
               <p className="text-xs text-outline font-label uppercase tracking-widest mt-1">{timeAgo}</p>
             </div>
           </div>
-          <button className="text-outline hover:text-on-surface transition-colors p-2">
-            <span className="material-symbols-outlined">more_vert</span>
-          </button>
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className={`text-outline hover:text-on-surface transition-colors p-2 rounded-full ${showDropdown ? 'bg-surface-container-highest text-on-surface' : ''}`}
+            >
+              <span className="material-symbols-outlined">more_vert</span>
+            </button>
+
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in duration-200">
+                <div className="py-1">
+                  <button className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-highest flex items-center gap-3 transition-colors">
+                    <span className="material-symbols-outlined text-lg">share</span>
+                    Share Artifact
+                  </button>
+                  <button className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-highest flex items-center gap-3 transition-colors">
+                    <span className="material-symbols-outlined text-lg">report</span>
+                    Report Content
+                  </button>
+                  
+                  {hasAccess && mediaUrl && (
+                    <button 
+                      onClick={() => { setShowDropdown(false); handleDownload(); }}
+                      className="w-full px-4 py-3 text-left text-sm text-primary hover:bg-primary/10 flex items-center gap-3 transition-colors font-bold"
+                    >
+                      <span className="material-symbols-outlined text-lg">download</span>
+                      Download Artifact
+                    </button>
+                  )}
+                  
+                  {canEdit && (
+                    <>
+                      <div className="h-[1px] bg-outline-variant/10 my-1" />
+                      <button 
+                        onClick={() => { setShowDropdown(false); setShowDeleteConfirm(true); }}
+                        className="w-full px-4 py-3 text-left text-sm text-error/80 hover:bg-error/10 flex items-center gap-3 transition-colors font-bold"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                        Delete Artifact
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <Modal 
+          isOpen={showDeleteConfirm} 
+          onClose={() => setShowDeleteConfirm(false)}
+          title="Delete Artifact?"
+        >
+          <div className="space-y-6">
+            <p className="text-on-surface-variant text-sm leading-relaxed">
+              This action is permanent and cannot be undone. All data associated with this artifact—including likes, comments, and metrics—will be expunged from the collective memory.
+            </p>
+            
+            <div className="flex gap-3 justify-end pt-2">
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-6 py-2.5 rounded-full text-xs font-bold font-label uppercase tracking-widest text-outline hover:bg-surface-container-highest transition-all"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-6 py-2.5 rounded-full text-xs font-bold font-label uppercase tracking-widest bg-error text-on-error shadow-lg shadow-error/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <span className="w-3 h-3 border-2 border-on-error/30 border-t-on-error rounded-full animate-spin" />
+                    Expunging...
+                  </>
+                ) : (
+                  'Confirm Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </Modal>
 
         {/* Post Content */}
         <div className="p-6">

@@ -19,6 +19,10 @@ export default async function PostDetailsPage({ params }: { params: Promise<{ id
     likes: 4242,
     comments: 134,
     tips: "$240",
+    postId: postId,
+    price: 0,
+    creatorId: "mock-creator-id",
+    hasAccess: true,
   };
 
   return (
@@ -34,7 +38,10 @@ export default async function PostDetailsPage({ params }: { params: Promise<{ id
             Back to Feed
           </Link>
 
-          <PostCard {...mockPost} />
+          <PostCard 
+            {...mockPost} 
+            onDelete={() => window.location.href = '/feed'}
+          />
 
           {/* Comments Section */}
           <section className="bg-surface-container-high rounded-xl p-8 glass-card border border-outline-variant/10 shadow-xl">

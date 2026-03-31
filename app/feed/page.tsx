@@ -26,6 +26,7 @@ interface Post {
     handle: string;
     avatar: string | null;
   };
+  hasAccess?: boolean;
 }
 
 export default function FeedPage() {
@@ -130,6 +131,9 @@ export default function FeedPage() {
                 hasLiked={post.hasLiked || false}
                 comments={post.comments || 0}
                 tips="$0"
+                creatorId={post.creatorId}
+                onDelete={(deletedId) => setPosts(prev => prev.filter(p => p.id !== deletedId))}
+                hasAccess={post.hasAccess}
               />
             ))}
           </div>
