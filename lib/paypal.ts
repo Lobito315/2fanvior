@@ -2,7 +2,8 @@
  * Lightweight PayPal REST API implementation for Edge Runtime.
  */
 
-const PAYPAL_API = process.env.NODE_ENV === 'production' 
+const PAYPAL_MODE = process.env.PAYPAL_MODE || 'sandbox';
+const PAYPAL_API = PAYPAL_MODE === 'live' 
   ? 'https://api-m.paypal.com' 
   : 'https://api-m.sandbox.paypal.com';
 
