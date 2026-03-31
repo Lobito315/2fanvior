@@ -2,6 +2,7 @@ import React from 'react';
 import { TopNavBar } from '@/components/layout/TopNavBar';
 import { SideNavBar } from '@/components/layout/SideNavBar';
 import { PostCard } from '@/components/cards/PostCard';
+import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 
 export default async function PostDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,16 +27,16 @@ export default async function PostDetailsPage({ params }: { params: Promise<{ id
   };
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen">
+    <div className="bg-bg-main text-text-primary min-h-screen">
       <SideNavBar />
       <TopNavBar />
       
-      <main className="ml-64 mt-20 p-8 flex justify-center w-full max-w-7xl mx-auto">
-        <div className="w-full max-w-3xl space-y-8">
+      <main className="ml-64 mt-20 p-10 flex justify-center w-full max-w-[1600px] mx-auto">
+        <div className="w-full max-w-4xl space-y-10">
           
-          <Link href="/feed" className="inline-flex items-center gap-2 text-outline hover:text-on-surface transition-colors font-label uppercase tracking-widest text-xs">
-            <span className="material-symbols-outlined text-lg">arrow_back</span>
-            Back to Feed
+          <Link href="/feed" className="inline-flex items-center gap-3 text-text-muted hover:text-brand-secondary transition-all font-black uppercase tracking-[0.2em] text-[10px] group">
+            <span className="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform">arrow_back</span>
+            Return to Collective
           </Link>
 
           <PostCard 
@@ -44,47 +45,55 @@ export default async function PostDetailsPage({ params }: { params: Promise<{ id
           />
 
           {/* Comments Section */}
-          <section className="bg-surface-container-high rounded-xl p-8 glass-card border border-outline-variant/10 shadow-xl">
-            <h3 className="font-headline font-bold text-xl mb-6">Discussion ({mockPost.comments})</h3>
+          <section className="bg-surface rounded-3xl p-10 border border-border-subtle/30 shadow-premium relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 brand-gradient opacity-5 blur-[100px] pointer-events-none"></div>
+            <h3 className="font-headline font-black text-xl mb-10 tracking-tight uppercase">Connection Points ({mockPost.comments})</h3>
             
             {/* Comment Input */}
-            <div className="flex gap-4 mb-8">
-               <div className="w-10 h-10 rounded-full bg-primary/20 flex-shrink-0"></div>
+            <div className="flex gap-6 mb-12 group">
+               <div className="w-12 h-12 rounded-xl bg-brand-primary/10 flex-shrink-0 border border-brand-primary/20 flex items-center justify-center">
+                 <span className="material-symbols-outlined text-brand-primary">person</span>
+               </div>
                <div className="flex-1">
                  <textarea 
-                   placeholder="Add to the discussion..." 
-                   className="w-full bg-surface-container-low border border-outline-variant/20 rounded-lg p-4 text-sm font-body focus:outline-none focus:border-primary/50 transition-colors resize-none h-24"
+                   placeholder="Inject data into the connection..." 
+                   className="w-full bg-bg-secondary/50 border border-border-subtle/30 rounded-2xl p-5 text-sm font-medium focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary focus:bg-bg-secondary transition-all resize-none h-32 placeholder:text-text-muted/40 text-text-primary"
                  />
-                 <div className="flex justify-end mt-2">
-                   <button className="brand-gradient px-6 py-2 rounded-full text-xs font-bold text-on-primary-container shadow-lg shadow-primary-container/20 hover:scale-[1.05] active:scale-95 transition-all uppercase tracking-widest font-label">
-                     Post Comment
-                   </button>
+                 <div className="flex justify-end mt-4">
+                   <Button variant="primary">
+                     Transmit Data
+                   </Button>
                  </div>
                </div>
             </div>
 
             {/* Mock Comments List */}
-            <div className="space-y-6">
+            <div className="space-y-8">
               {[
-                { name: "Nexus Arte", time: "1 hour ago", text: "This structural gradient aesthetic is incredible. Truly pushing the boundaries of the nocturnal vibe." },
-                { name: "Digital Nomad", time: "45 minutes ago", text: "Incredible curation as always. Waiting for the next drop." },
-                { name: "Void Walker", time: "12 minutes ago", text: "The use of contrasting shadows here defines the entire sequence." }
+                { name: "Nexus Arte", handle: "@nexus", time: "1h ago", text: "This structural gradient aesthetic is incredible. Truly pushing the boundaries of the nocturnal vibe." },
+                { name: "Digital Nomad", handle: "@nomad", time: "45m ago", text: "Incredible curation as always. Waiting for the next drop." },
+                { name: "Void Walker", handle: "@void", time: "12m ago", text: "The use of contrasting shadows here defines the entire sequence." }
               ].map((comment, i) => (
-                <div key={i} className="flex gap-4 p-4 rounded-lg bg-surface-container-low/50 border border-outline-variant/5 hover:bg-surface-container-highest transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-surface-container-lowest border border-outline/10 flex-shrink-0"></div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-sm text-on-surface">{comment.name}</span>
-                      <span className="text-xs text-outline">{comment.time}</span>
+                <div key={i} className="flex gap-5 p-6 rounded-2xl bg-bg-secondary/30 border border-border-subtle/10 hover:border-brand-primary/30 hover:bg-bg-secondary/50 transition-all duration-300 group/comment">
+                  <div className="w-12 h-12 rounded-xl bg-surface border border-border-subtle flex-shrink-0 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-text-muted/50">account_circle</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                       <div className="flex items-center gap-2">
+                         <span className="font-black text-xs text-text-primary uppercase tracking-tight group-hover/comment:text-brand-secondary transition-colors">{comment.name}</span>
+                         <span className="text-[9px] text-text-muted font-bold opacity-60 uppercase">{comment.handle}</span>
+                       </div>
+                       <span className="text-[9px] text-text-muted font-black uppercase tracking-widest">{comment.time}</span>
                     </div>
-                    <p className="text-sm text-on-surface-variant font-body">{comment.text}</p>
+                    <p className="text-sm text-text-secondary font-medium leading-relaxed mb-4">{comment.text}</p>
                     
-                    <div className="flex gap-4 mt-3">
-                      <button className="flex items-center gap-1 text-xs text-outline hover:text-tertiary transition-colors">
-                        <span className="material-symbols-outlined text-sm">favorite</span>
-                        <span>{24 - i * 5}</span>
+                    <div className="flex gap-6">
+                      <button className="flex items-center gap-2 text-[10px] font-black text-text-muted hover:text-status-error transition-colors uppercase tracking-widest group/like">
+                        <span className="material-symbols-outlined text-base group-hover/like:scale-110 transition-transform">favorite</span>
+                        <span className="tabular-nums">{24 - i * 5}</span>
                       </button>
-                      <button className="flex items-center gap-1 text-xs text-outline hover:text-on-surface transition-colors">
+                      <button className="flex items-center gap-2 text-[10px] font-black text-text-muted hover:text-brand-primary transition-colors uppercase tracking-widest">
                          Reply
                       </button>
                     </div>

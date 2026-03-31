@@ -32,7 +32,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=optional"
         />
       </head>
-      <body className="min-h-full flex flex-col font-body bg-surface text-on-surface">
+      <body className="min-h-full flex flex-col font-body bg-bg-main text-text-primary selection:bg-brand-primary/30 selection:text-brand-secondary antialiased">
         <NextAuthProvider>
           {children}
         </NextAuthProvider>

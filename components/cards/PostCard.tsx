@@ -6,6 +6,7 @@ import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { PayPalUnlockButton } from '@/components/payments/PayPalUnlockButton';
 import { useSession } from 'next-auth/react';
 import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 
 interface Comment {
   id: string;
@@ -354,60 +355,60 @@ export function PostCard({
     <>
       {showTipModal && <TipModal postId={postId} onClose={() => setShowTipModal(false)} />}
 
-      <article className="bg-surface-container-high rounded-xl overflow-hidden glass-card shadow-xl border border-outline-variant/10">
+      <article className="bg-surface rounded-2xl overflow-hidden shadow-premium border border-border-subtle/30 group hover:border-brand-primary/30 transition-all duration-500">
         {/* Post Header */}
-        <div className="p-6 flex items-center justify-between border-b border-outline-variant/10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full overflow-hidden relative border border-outline-variant/20">
-              <Image src={creatorAvatar} alt={creatorName} fill className="object-cover" sizes="48px" />
+        <div className="p-8 flex items-center justify-between border-b border-border-subtle/20">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-xl overflow-hidden relative border border-border-subtle group-hover:ring-2 group-hover:ring-brand-primary/30 transition-all duration-500">
+              <Image src={creatorAvatar} alt={creatorName} fill className="object-cover" sizes="56px" />
             </div>
             <div>
-              <h3 className="font-headline font-bold text-on-surface flex items-center gap-1">
+              <h3 className="font-headline font-black text-text-primary text-base flex items-center gap-2 tracking-tight group-hover:text-brand-secondary transition-colors uppercase">
                 {creatorName}
-                <span className="material-symbols-outlined text-sm text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                <span className="material-symbols-outlined text-sm text-brand-primary" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
               </h3>
-              <p className="text-xs text-outline font-label uppercase tracking-widest mt-1">{timeAgo}</p>
+              <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em] mt-1.5 opacity-60">{timeAgo}</p>
             </div>
           </div>
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setShowDropdown(!showDropdown)}
-              className={`text-outline hover:text-on-surface transition-colors p-2 rounded-full ${showDropdown ? 'bg-surface-container-highest text-on-surface' : ''}`}
+              className={`text-text-muted hover:text-text-primary transition-all p-2.5 rounded-xl ${showDropdown ? 'bg-surface-light text-text-primary' : 'hover:bg-surface-light/50'}`}
             >
-              <span className="material-symbols-outlined">more_vert</span>
+              <span className="material-symbols-outlined text-2xl">more_vert</span>
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in duration-200">
-                <div className="py-1">
-                  <button className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-highest flex items-center gap-3 transition-colors">
-                    <span className="material-symbols-outlined text-lg">share</span>
+              <div className="absolute right-0 mt-3 w-56 bg-surface border border-border-subtle/40 rounded-2xl shadow-3xl z-50 overflow-hidden backdrop-blur-2xl animate-in fade-in zoom-in duration-300">
+                <div className="py-2">
+                  <button className="w-full px-5 py-4 text-left text-xs font-bold uppercase tracking-widest text-text-secondary hover:bg-surface-light hover:text-text-primary flex items-center gap-4 transition-all">
+                    <span className="material-symbols-outlined text-xl">share</span>
                     Share Artifact
                   </button>
-                  <button className="w-full px-4 py-3 text-left text-sm text-on-surface hover:bg-surface-container-highest flex items-center gap-3 transition-colors">
-                    <span className="material-symbols-outlined text-lg">report</span>
+                  <button className="w-full px-5 py-4 text-left text-xs font-bold uppercase tracking-widest text-text-secondary hover:bg-surface-light hover:text-text-primary flex items-center gap-4 transition-all">
+                    <span className="material-symbols-outlined text-xl">report</span>
                     Report Content
                   </button>
                   
                   {hasAccess && mediaUrl && (
                     <button 
                       onClick={() => { setShowDropdown(false); handleDownload(); }}
-                      className="w-full px-4 py-3 text-left text-sm text-primary hover:bg-primary/10 flex items-center gap-3 transition-colors font-bold"
+                      className="w-full px-5 py-4 text-left text-xs font-black uppercase tracking-widest text-brand-secondary hover:bg-brand-secondary/10 flex items-center gap-4 transition-all"
                     >
-                      <span className="material-symbols-outlined text-lg">download</span>
-                      Download Artifact
+                      <span className="material-symbols-outlined text-xl">download</span>
+                      Download
                     </button>
                   )}
                   
                   {canEdit && (
                     <>
-                      <div className="h-[1px] bg-outline-variant/10 my-1" />
+                      <div className="h-[1px] bg-border-subtle/20 my-2 mx-4" />
                       <button 
                         onClick={() => { setShowDropdown(false); setShowDeleteConfirm(true); }}
-                        className="w-full px-4 py-3 text-left text-sm text-error/80 hover:bg-error/10 flex items-center gap-3 transition-colors font-bold"
+                        className="w-full px-5 py-4 text-left text-xs font-black uppercase tracking-widest text-status-error hover:bg-status-error/10 flex items-center gap-4 transition-all"
                       >
-                        <span className="material-symbols-outlined text-lg">delete</span>
-                        Delete Artifact
+                        <span className="material-symbols-outlined text-xl">delete</span>
+                        Expunge
                       </button>
                     </>
                   )}
@@ -455,12 +456,12 @@ export function PostCard({
         </Modal>
 
         {/* Post Content */}
-        <div className="p-6">
-          {description && <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-2 font-bold">{description}</p>}
-          {content && <p className="text-on-surface-variant text-sm font-body leading-relaxed mb-6">{content}</p>}
+        <div className="p-8">
+          {description && <p className="text-text-primary text-sm font-bold leading-relaxed mb-4 tracking-tight">{description}</p>}
+          {content && <p className="text-text-secondary text-sm font-medium leading-loose mb-8 opacity-80 font-body">{content}</p>}
 
           {mediaUrl && !showLocked && (
-            <div className="relative w-full rounded-lg overflow-hidden border border-outline-variant/10 mb-6 bg-black flex items-center justify-center min-h-[200px]">
+            <div className="relative w-full rounded-2xl overflow-hidden border border-border-subtle/30 mb-8 bg-bg-main shadow-premium">
               {mediaType === 'video' ? (
                 <video
                   src={mediaUrl}
@@ -484,22 +485,26 @@ export function PostCard({
           )}
 
           {showLocked && (
-            <div className="relative w-full aspect-square md:aspect-video rounded-lg overflow-hidden mb-6 flex items-center justify-center border border-primary-container/30 bg-surface-container-low group">
+            <div className="relative w-full aspect-square md:aspect-video rounded-2xl overflow-hidden mb-8 flex items-center justify-center border border-brand-primary/20 bg-bg-main group/lock">
               {mediaUrl && (
                 <div className="absolute inset-0">
                   {mediaType === 'video' ? (
-                    <div className="w-full h-full bg-surface-container-highest flex items-center justify-center opacity-40 blur-md">
-                      <span className="material-symbols-outlined text-6xl">videocam</span>
+                    <div className="w-full h-full bg-bg-secondary flex items-center justify-center opacity-30 blur-2xl font-body">
+                      <span className="material-symbols-outlined text-8xl">videocam</span>
                     </div>
                   ) : (
-                    <Image src={mediaUrl} alt="Locked content preview" fill className="object-cover opacity-30 blur-md grayscale transition-all group-hover:blur-sm" />
+                    <Image src={mediaUrl} alt="Locked artifact" fill className="object-cover opacity-20 blur-2xl grayscale transition-all group-hover/lock:opacity-30 group-hover/lock:blur-xl" />
                   )}
                 </div>
               )}
-              <div className="relative z-10 flex flex-col items-center p-8 bg-surface-container-high/80 backdrop-blur-xl rounded-2xl border border-primary/20 shadow-2xl">
-                <span className="material-symbols-outlined text-4xl text-primary mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
-                <h4 className="font-headline font-bold text-on-surface text-lg mb-2">Premium Artifact</h4>
-                <p className="text-xs text-outline font-label uppercase tracking-widest text-center mb-6">Unlock for ${price.toFixed(2)} to reveal curated content</p>
+              <div className="relative z-10 flex flex-col items-center p-10 bg-surface/90 backdrop-blur-2xl rounded-3xl border border-brand-primary/30 shadow-3xl text-center max-w-sm">
+                <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-6 ring-4 ring-brand-primary/5">
+                  <span className="material-symbols-outlined text-3xl text-brand-primary" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+                </div>
+                <h4 className="font-headline font-black text-text-primary text-xl mb-3 tracking-tight uppercase">Premium Artifact</h4>
+                <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.25em] mb-8 leading-relaxed">
+                  Support the curator with ${price.toFixed(2)} to unlock high-fidelity data
+                </p>
                 <PayPalUnlockButton
                   postId={postId}
                   amount={price}
@@ -511,52 +516,51 @@ export function PostCard({
         </div>
 
         {/* Post Actions */}
-        <div className="bg-surface-container-lowest px-4 py-3 flex items-center justify-between border-t border-outline-variant/10">
-          <div className="flex gap-1">
+        <div className="bg-bg-secondary/40 px-6 py-4 flex items-center justify-between border-t border-border-subtle/20">
+          <div className="flex gap-2">
             {/* Like button */}
             <button
               onClick={handleLike}
               disabled={likePending}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+              className={`flex items-center gap-3 px-5 py-2.5 rounded-xl transition-all duration-300 group/btn ${
                 hasLiked
-                  ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20'
-                  : 'text-outline hover:bg-surface-container-highest hover:text-red-400'
+                  ? 'text-status-error bg-status-error/10 hover:bg-status-error/20'
+                  : 'text-text-muted hover:bg-surface-light/50 hover:text-status-error'
               }`}
             >
               <span
-                className="material-symbols-outlined text-lg transition-transform duration-150 active:scale-125"
+                className="material-symbols-outlined text-xl transition-transform duration-300 group-active/btn:scale-150"
                 style={{ fontVariationSettings: hasLiked ? "'FILL' 1" : "'FILL' 0" }}
               >
                 favorite
               </span>
-              <span className="text-xs font-bold tabular-nums">{likeCount}</span>
+              <span className="text-xs font-black tabular-nums tracking-wider">{likeCount}</span>
             </button>
 
             {/* Comment button */}
             <button
               onClick={() => setShowComments(v => !v)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+              className={`flex items-center gap-3 px-5 py-2.5 rounded-xl transition-all duration-300 ${
                 showComments
-                  ? 'text-primary bg-primary/10'
-                  : 'text-outline hover:bg-surface-container-highest hover:text-on-surface'
+                  ? 'text-brand-secondary bg-brand-secondary/10'
+                  : 'text-text-muted hover:bg-surface-light/50 hover:text-text-primary'
               }`}
             >
-              <span className="material-symbols-outlined text-lg">chat_bubble</span>
-              <span className="text-xs font-bold tabular-nums">{commentCount}</span>
+              <span className="material-symbols-outlined text-xl">chat_bubble</span>
+              <span className="text-xs font-black tabular-nums tracking-wider">{commentCount}</span>
             </button>
           </div>
 
           {/* Tip button */}
           <button
             onClick={() => setShowTipModal(true)}
-            className="flex items-center gap-2 px-5 py-2 rounded-full bg-primary-container/10 text-primary border border-primary/20 hover:bg-primary-container/20 hover:scale-105 transition-all duration-200"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-xl bg-brand-primary text-white shadow-glow-primary hover:scale-105 active:scale-95 transition-all duration-300 font-black text-[10px] uppercase tracking-widest"
           >
             <span className="material-symbols-outlined text-lg">payments</span>
-            <span className="text-xs font-bold font-label uppercase tracking-widest">Tip</span>
+            Tip Creator
           </button>
         </div>
 
-        {/* Expandable comments */}
         {showComments && (
           <CommentSection
             postId={postId}
@@ -564,6 +568,44 @@ export function PostCard({
           />
         )}
       </article>
+
+      {/* Delete Confirmation Modal */}
+      <Modal 
+        isOpen={showDeleteConfirm} 
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Expunge Artifact?"
+      >
+        <div className="space-y-8">
+          <p className="text-text-secondary text-sm leading-relaxed opacity-80 font-medium">
+            This action is permanent. All associated engagement metrics, connection points, and content will be irreversibly removed from the collective.
+          </p>
+          
+          <div className="flex gap-4 justify-end">
+            <button 
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-text-muted hover:bg-surface-light transition-all"
+              disabled={deleting}
+            >
+              Cancel
+            </button>
+            <Button 
+              onClick={handleDelete}
+              disabled={deleting}
+              variant="primary"
+              className="bg-status-error hover:bg-status-error/90 shadow-none hover:shadow-glow-error"
+            >
+              {deleting ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Expunging...
+                </>
+              ) : (
+                'Confirm Expunge'
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

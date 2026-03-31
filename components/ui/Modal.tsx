@@ -49,16 +49,16 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
             className={cn(
-              "relative w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-high border border-outline-variant/20 shadow-2xl p-6",
+              "relative w-full max-w-lg overflow-hidden rounded-2xl bg-surface border border-border-subtle/30 shadow-premium p-8 backdrop-blur-xl",
               className
             )}
           >
             {title && (
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-headline font-bold text-on-surface">{title}</h2>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-headline font-bold text-text-primary tracking-tight">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-full hover:bg-surface-container-highest transition-colors text-outline hover:text-on-surface"
+                  className="p-2 rounded-xl hover:bg-surface-light transition-all text-text-muted hover:text-text-primary"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
@@ -68,7 +68,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             {!title && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-container-highest transition-colors text-outline hover:text-on-surface z-10"
+                className="absolute top-6 right-6 p-2 rounded-xl hover:bg-surface-light transition-all text-text-muted hover:text-text-primary z-10"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>

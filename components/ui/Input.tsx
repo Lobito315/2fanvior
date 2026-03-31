@@ -18,7 +18,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <div className={cn("space-y-2 w-full", containerClassName)}>
         {label && (
           <div className="flex justify-between items-end mb-1">
-            <label htmlFor={inputId} className="font-label text-xs font-bold uppercase tracking-widest text-outline ml-1">
+            <label htmlFor={inputId} className="font-label text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted ml-0.5">
               {label}
             </label>
           </div>
@@ -27,7 +27,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative group">
           {icon && (
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">
+              <span className="material-symbols-outlined text-text-muted group-focus-within:text-brand-primary transition-all duration-300">
                 {icon}
               </span>
             </div>
@@ -36,16 +36,16 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={cn(
-              "w-full h-14 bg-surface-container-lowest/50 border-none rounded-lg text-on-surface placeholder:text-outline/40 focus:ring-1 focus:ring-primary/50 focus:bg-surface-container-lowest transition-all font-medium",
+              "w-full h-14 bg-bg-main border border-border-subtle/50 rounded-xl text-text-primary placeholder:text-text-muted/40 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary focus:bg-bg-main/80 transition-all duration-300 font-medium",
               icon ? "pl-12 pr-4" : "px-5",
-              error && "ring-1 ring-error focus:ring-error",
+              error && "border-status-error focus:ring-status-error/20 focus:border-status-error",
               className
             )}
             {...props}
           />
         </div>
         {error && (
-          <p className="text-xs text-error mt-1 ml-1">{error}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-status-error mt-1.5 ml-0.5">{error}</p>
         )}
       </div>
     );

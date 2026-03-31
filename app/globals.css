@@ -5,25 +5,34 @@
 @layer base {
   :root {
     color-scheme: dark;
-    --background: #12121d;
-    --foreground: #e3e0f1;
+    --background: #0B0F1A;
+    --foreground: #E6E9F0;
   }
   
   body {
-    background-color: theme('colors.background');
-    color: theme('colors.on-surface');
+    background-color: theme('colors.bg-main');
+    color: theme('colors.text.primary');
     font-family: theme('fontFamily.body');
     -webkit-font-smoothing: antialiased;
+    selection: bg-brand-primary/30;
+  }
+
+  * {
+    @apply transition-colors duration-200;
   }
 }
 
 @layer components {
   .glass-card {
-    background: rgba(41, 41, 53, 0.6);
-    backdrop-filter: blur(20px);
+    @apply bg-surface/60 backdrop-blur-xl border border-border-subtle/30 shadow-premium;
   }
+  
   .brand-gradient {
-    background: linear-gradient(135deg, #6c5ce7 0%, #4029ba 100%);
+    @apply bg-brand-gradient;
+  }
+
+  .premium-glow {
+    @apply shadow-glow-primary;
   }
 }
 
