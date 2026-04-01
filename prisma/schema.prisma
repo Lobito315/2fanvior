@@ -16,6 +16,7 @@ model User {
   passwordHash      String?
   avatar            String?
   bio               String?
+  paypalEmail       String?
   subscriptionPrice Float          @default(9.99)
   role              String         @default("SUBSCRIBER")
   createdAt         DateTime       @default(now())

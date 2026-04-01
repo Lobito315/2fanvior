@@ -21,7 +21,8 @@ const updateProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
   handle: z.string().min(3, "Handle must be at least 3 characters").optional(),
   bio: z.string().max(160, "Bio cannot exceed 160 characters").optional(),
-  avatar: z.string().url("Avatar must be a valid URL").optional().or(z.literal(''))
+  avatar: z.string().url("Avatar must be a valid URL").optional().or(z.literal('')),
+  paypalEmail: z.string().email("Invalid PayPal email").optional().or(z.literal(''))
 });
 
 export async function PUT(req: Request) {
@@ -39,12 +40,18 @@ export async function PUT(req: Request) {
       );
     }
 
-    const { name, handle, bio, avatar } = result.data;
+    const { name, handle, bio, avatar, paypalEmail } = result.data;
     const userId = (session.user as any).id;
     
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { name, handle, bio, avatar: avatar || null }
+      data: { 
+        name, 
+        handle, 
+        bio, 
+        avatar: avatar || null,
+        paypalEmail: paypalEmail || null
+      }
     });
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error: any) {

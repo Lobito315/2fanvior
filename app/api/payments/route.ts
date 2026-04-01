@@ -35,7 +35,13 @@ export async function POST(req: Request) {
           if (post) targetRecipientId = post.creatorId;
         }
 
-        const paypalOrder = await createPayPalOrder(amount, 'USD');
+        // Fetch creator's paypalEmail
+        const recipient = await prisma.user.findUnique({ 
+          where: { id: targetRecipientId }, 
+          select: { paypalEmail: true } 
+        });
+
+        const paypalOrder = await createPayPalOrder(amount, 'USD', recipient?.paypalEmail || undefined);
         return NextResponse.json({ orderId: paypalOrder.id, status: paypalOrder.status });
       }
 
@@ -44,12 +50,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Missing postId' }, { status: 400 });
       }
 
-      const post = await prisma.post.findUnique({ where: { id: postId } });
+      const post = await prisma.post.findUnique({ 
+        where: { id: postId },
+        include: { creator: { select: { paypalEmail: true } } }
+      });
       if (!post || !post.isLocked) {
         return NextResponse.json({ error: 'Post not found or not for sale' }, { status: 404 });
       }
 
-      const paypalOrder = await createPayPalOrder(post.price, 'USD');
+      const paypalOrder = await createPayPalOrder(post.price, 'USD', post.creator.paypalEmail || undefined);
       return NextResponse.json({ orderId: paypalOrder.id, status: paypalOrder.status });
     }
 

@@ -39,8 +39,22 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-export async function createPayPalOrder(amount: number, currency: string = "USD"): Promise<PayPalOrderResponse> {
+export async function createPayPalOrder(amount: number, currency: string = "USD", payeeEmail?: string): Promise<PayPalOrderResponse> {
   const accessToken = await getAccessToken();
+  
+  const purchaseUnit: any = {
+    amount: {
+      currency_code: currency,
+      value: amount.toFixed(2),
+    },
+  };
+
+  if (payeeEmail) {
+    purchaseUnit.payee = {
+      email_address: payeeEmail,
+    };
+  }
+
   const response = await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
     method: "POST",
     headers: {
@@ -49,14 +63,7 @@ export async function createPayPalOrder(amount: number, currency: string = "USD"
     },
     body: JSON.stringify({
       intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: currency,
-            value: amount.toFixed(2),
-          },
-        },
-      ],
+      purchase_units: [purchaseUnit],
     }),
   });
 
