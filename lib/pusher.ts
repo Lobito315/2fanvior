@@ -71,3 +71,28 @@ export async function pusherTrigger(channel: string, event: string, data: any) {
 
   return await response.json();
 }
+
+/**
+ * Pusher Channel Authentication for Edge Runtime
+ */
+export async function pusherAuthenticate(socketId: string, channel: string, data?: any) {
+  const key = process.env.PUSHER_KEY;
+  const secret = process.env.PUSHER_SECRET;
+
+  if (!key || !secret) {
+    throw new Error("Pusher credentials missing");
+  }
+
+  let stringToSign = `${socketId}:${channel}`;
+  if (data) {
+    stringToSign += `:${JSON.stringify(data)}`;
+  }
+
+  const signature = await hmacSha256(secret, stringToSign);
+  const auth = `${key}:${signature}`;
+
+  return {
+    auth,
+    channel_data: data ? JSON.stringify(data) : undefined,
+  };
+}

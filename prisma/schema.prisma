@@ -23,8 +23,8 @@ model User {
   updatedAt         DateTime       @updatedAt
 
   posts             Post[]
-  messagesSent      Message[]      @relation("Sender")
-  messagesReceived  Message[]      @relation("Receiver")
+  messagesSent      Message[]      @relation("SentMessages")
+  conversations     Conversation[] @relation("UserConversations")
   
   subscriptions     Subscription[] @relation("Subscriber")
   subscribers       Subscription[] @relation("Creator")
@@ -82,14 +82,23 @@ model Payment {
   createdAt   DateTime @default(now())
 }
 
+model Conversation {
+  id           String    @id @default(cuid())
+  participants User[]    @relation("UserConversations")
+  messages     Message[]
+  lastMessageAt DateTime @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
 model Message {
-  id         String   @id @default(cuid())
-  senderId   String
-  receiverId String
-  sender     User     @relation("Sender", fields: [senderId], references: [id])
-  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
-  content    String
-  createdAt  DateTime @default(now())
+  id             String       @id @default(cuid())
+  content        String
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  createdAt      DateTime     @default(now())
 }
 
 model Notification {

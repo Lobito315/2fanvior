@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
+import "@livekit/components-styles";
 
 const manrope = Manrope({
   subsets: ["latin"],
