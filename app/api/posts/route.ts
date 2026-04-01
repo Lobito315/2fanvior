@@ -24,12 +24,24 @@ export async function GET(req: Request) {
     if (session?.user?.email) {
       const user = await prisma.user.findUnique({ where: { email: session.user.email } });
       if (user) {
+        // 1. Get post-specific unlocks
         const userPayments = await prisma.payment.findMany({
-          where: { userId: user.id, status: 'COMPLETED' },
+          where: { userId: user.id, status: 'COMPLETED', type: 'UNLOCK_POST' },
           select: { postId: true }
         }) as any[];
-        
         const unlockedPostIds = new Set(userPayments.map(p => p.postId).filter(Boolean));
+
+        // 2. Get creators whom the user has tipped at least $1
+        const tippedPayments = await prisma.payment.findMany({
+          where: { 
+            userId: user.id, 
+            status: 'COMPLETED', 
+            type: 'TIP',
+            amount: { gte: 1 } 
+          },
+          select: { recipientId: true }
+        }) as any[];
+        const tippedCreatorIds = new Set(tippedPayments.map(p => p.recipientId).filter(Boolean));
 
         const userLikes = await prisma.like.findMany({
           where: { userId: user.id },
@@ -37,14 +49,22 @@ export async function GET(req: Request) {
         }) as any[];
         const likedPostIds = new Set(userLikes.map(l => l.postId).filter(Boolean));
         
-        const processedPosts = posts.map(post => ({
-          ...post,
-          likes: post._count?.likes || 0,
-          comments: post._count?.comments || 0,
-          hasLiked: likedPostIds.has(post.id),
-          isLocked: post.isLocked && !unlockedPostIds.has(post.id) && post.creatorId !== user.id,
-          hasAccess: !post.isLocked || unlockedPostIds.has(post.id) || post.creatorId === user.id
-        }));
+        const processedPosts = posts.map(post => {
+          const isOwner = post.creatorId === user.id;
+          const isSpecificUnlock = unlockedPostIds.has(post.id);
+          const isCreatorTipped = tippedCreatorIds.has(post.creatorId);
+          
+          const hasAccess = !post.isLocked || isSpecificUnlock || isCreatorTipped || isOwner;
+
+          return {
+            ...post,
+            likes: post._count?.likes || 0,
+            comments: post._count?.comments || 0,
+            hasLiked: likedPostIds.has(post.id),
+            isLocked: post.isLocked && !hasAccess,
+            hasAccess
+          };
+        });
         
         return NextResponse.json(processedPosts);
       }

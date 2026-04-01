@@ -28,7 +28,8 @@ model User {
   subscriptions     Subscription[] @relation("Subscriber")
   subscribers       Subscription[] @relation("Creator")
   
-  payments          Payment[]
+  payments          Payment[]      @relation("UserPayments")
+  receivedPayments  Payment[]      @relation("RecipientPayments")
   notifications     Notification[]
   likes             Like[]
   comments          Comment[]
@@ -66,16 +67,18 @@ model Subscription {
 }
 
 model Payment {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  postId    String?
-  post      Post?    @relation(fields: [postId], references: [id])
-  amount    Float
-  currency  String   @default("USD")
-  type      String
-  status    String   @default("COMPLETED")
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserPayments", fields: [userId], references: [id])
+  recipientId String?
+  recipient   User?    @relation("RecipientPayments", fields: [recipientId], references: [id])
+  postId      String?
+  post        Post?    @relation(fields: [postId], references: [id])
+  amount      Float
+  currency    String   @default("USD")
+  type        String
+  status      String   @default("COMPLETED")
+  createdAt   DateTime @default(now())
 }
 
 model Message {

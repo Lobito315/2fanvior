@@ -37,7 +37,7 @@ interface PostCardProps {
 }
 
 // --- Tip Modal ---
-function TipModal({ postId, onClose }: { postId: string; onClose: () => void }) {
+function TipModal({ postId, creatorId, onClose }: { postId: string; creatorId: string; onClose: () => void }) {
   const [customAmount, setCustomAmount] = useState('');
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [sent, setSent] = useState(false);
@@ -109,7 +109,7 @@ function TipModal({ postId, onClose }: { postId: string; onClose: () => void }) 
                       const res = await fetch('/api/payments?action=create-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ postId, amount: finalAmount, type: 'TIP' }),
+                        body: JSON.stringify({ postId, recipientId: creatorId, amount: finalAmount, type: 'TIP' }),
                       });
                       const data = await res.json() as { orderId: string };
                       return data.orderId || '';
@@ -120,7 +120,7 @@ function TipModal({ postId, onClose }: { postId: string; onClose: () => void }) 
                       const res = await fetch('/api/payments?action=capture-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderId: data.orderID, postId, amount: finalAmount?.toString(), type: 'TIP' }),
+                        body: JSON.stringify({ orderId: data.orderID, postId, recipientId: creatorId, amount: finalAmount?.toString(), type: 'TIP' }),
                       });
                       const result = await res.json() as { success: boolean };
                       if (result.success) setSent(true);
@@ -353,7 +353,7 @@ export function PostCard({
 
   return (
     <>
-      {showTipModal && <TipModal postId={postId} onClose={() => setShowTipModal(false)} />}
+      {showTipModal && <TipModal postId={postId} creatorId={creatorId} onClose={() => setShowTipModal(false)} />}
 
       <article className="bg-surface rounded-2xl overflow-hidden shadow-premium border border-border-subtle/30 group hover:border-brand-primary/30 transition-all duration-500">
         {/* Post Header */}

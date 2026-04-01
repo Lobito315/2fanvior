@@ -21,13 +21,20 @@ export async function POST(req: Request) {
 
     // --- CREATE ORDER ACTION ---
     if (action === 'create-order') {
-      const { postId, amount, type } = body as { postId?: string; amount?: number; type?: string };
+      const { postId, recipientId, amount, type } = body as { postId?: string; recipientId?: string; amount?: number; type?: string };
 
       // TIP flow
       if (type === 'TIP') {
         if (!amount || amount <= 0) {
           return NextResponse.json({ error: 'Invalid tip amount' }, { status: 400 });
         }
+        // If we have a postId but no recipientId, try to find the recipient
+        let targetRecipientId = recipientId;
+        if (!targetRecipientId && postId) {
+          const post = await prisma.post.findUnique({ where: { id: postId }, select: { creatorId: true } });
+          if (post) targetRecipientId = post.creatorId;
+        }
+
         const paypalOrder = await createPayPalOrder(amount, 'USD');
         return NextResponse.json({ orderId: paypalOrder.id, status: paypalOrder.status });
       }
@@ -48,7 +55,7 @@ export async function POST(req: Request) {
 
     // --- CAPTURE ORDER ACTION ---
     if (action === 'capture-order') {
-      const { orderId, postId, amount, type } = body as { orderId: string; postId?: string; amount?: string; type?: string };
+      const { orderId, postId, recipientId, amount, type } = body as { orderId: string; postId?: string; recipientId?: string; amount?: string; type?: string };
 
       if (!orderId) {
         return NextResponse.json({ error: 'Missing orderId' }, { status: 400 });
@@ -65,9 +72,16 @@ export async function POST(req: Request) {
 
       // Save payment based on type
       if (type === 'TIP') {
+        let finalRecipientId = recipientId;
+        if (!finalRecipientId && postId) {
+          const post = await prisma.post.findUnique({ where: { id: postId }, select: { creatorId: true } });
+          if (post) finalRecipientId = post.creatorId;
+        }
+
         const payment = await prisma.payment.create({
           data: {
             userId: user.id,
+            recipientId: finalRecipientId,
             postId: postId ?? null,
             amount: capturedAmount,
             currency: 'USD',
@@ -85,6 +99,7 @@ export async function POST(req: Request) {
         const payment = await prisma.payment.create({
           data: {
             userId: user.id,
+            recipientId: post.creatorId,
             postId: postId,
             amount: post.price,
             currency: 'USD',
